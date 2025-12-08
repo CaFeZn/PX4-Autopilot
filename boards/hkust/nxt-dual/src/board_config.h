@@ -121,8 +121,8 @@
 
 /* Spare GPIO */
 #define GPIO_PA4                       	/* PA4 */  (GPIO_INPUT|GPIO_PULLUP|GPIO_PORTA|GPIO_PIN4)
-#define GPIO_PC0                       	/* PC0 */  (GPIO_INPUT|GPIO_PULLUP|GPIO_PORTC|GPIO_PIN0)
-#define GPIO_PC1                       	/* PC1 */  (GPIO_INPUT|GPIO_PULLUP|GPIO_PORTC|GPIO_PIN1)
+#define GPIO_PC0                       	/* PC0 */  (GPIO_OUTPUT | GPIO_PUSHPULL | GPIO_SPEED_2MHz | GPIO_OUTPUT_CLEAR | GPIO_PORTC | GPIO_PIN0)
+#define GPIO_PC1                       	/* PC1 */  (GPIO_OUTPUT | GPIO_PUSHPULL | GPIO_SPEED_2MHz | GPIO_OUTPUT_CLEAR | GPIO_PORTC | GPIO_PIN1)
 /* Tone alarm output */
 
 #define TONE_ALARM_TIMER        4 /* Timer 4 */
@@ -151,6 +151,15 @@
 // #define GPIO_SBUS_INV                  (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_2MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTD|GPIO_PIN14)
 // #define RC_INVERT_INPUT(_invert_true)  px4_arch_gpiowrite(GPIO_SBUS_INV, _invert_true);
 
+/*
+ * Heater
+*/
+#define GPIO_HEATER_OUTPUT
+
+#define GPIO_HEATER1		GPIO_PC0
+#define GPIO_HEATER2		GPIO_PC1
+
+
 /* SD card bringup does not work if performed on the IDLE thread because it
  * will cause waiting.  Use either:
  *
@@ -174,8 +183,8 @@
 		PX4_ADC_GPIO, \
 		GPIO_TONE_ALARM_IDLE, \
 		GPIO_SPL_ADDR_SET, \
-		GPIO_PC0, \
-		GPIO_PC1, \
+		GPIO_HEATER1,\
+		GPIO_HEATER2,\
 	}
 
 #define BOARD_ENABLE_CONSOLE_BUFFER

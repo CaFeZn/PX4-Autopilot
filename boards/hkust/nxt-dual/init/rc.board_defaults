@@ -22,3 +22,13 @@ param set-default MAV_TYPE 2
 param set-default CA_AIRFRAME 0
 param set-default CA_ROTOR_COUNT 4
 param set-default CBRK_SUPPLY_CHK 894281
+
+param set-default SENS_IMU1_ID 6946826 # BMI088
+param set-default SENS_IMU2_ID 6946850 # BMI088
+
+param set-default SENS_IMU1_TEMP 48.0
+param set-default SENS_IMU2_TEMP 42.0
+
+# run two heater instances
+heater start -i 1
+heater start -i 2
