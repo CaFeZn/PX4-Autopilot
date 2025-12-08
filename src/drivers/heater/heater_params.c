@@ -54,6 +54,12 @@
  * @group Sensors
  */
 PARAM_DEFINE_INT32(SENS_IMU1_ID, 2818058);        // BMI088 标准 device_id
+/**
+ * Target IMU device ID to regulate temperature.
+ *
+ * @category system
+ * @group Sensors
+ */
 PARAM_DEFINE_INT32(SENS_IMU2_ID, 3014666);        // ICM45686 标准 device_id
 
 /**
@@ -67,6 +73,16 @@ PARAM_DEFINE_INT32(SENS_IMU2_ID, 3014666);        // ICM45686 标准 device_id
  * @decimal 3
  */
 PARAM_DEFINE_FLOAT(SENS_IMU1_TEMP, 48.0f);        // BMI088 推荐温度
+/**
+ * Target IMU temperature.
+ *
+ * @category system
+ * @group Sensors
+ * @unit celcius
+ * @min 0
+ * @max 85.0
+ * @decimal 3
+ */
 PARAM_DEFINE_FLOAT(SENS_IMU2_TEMP, 42.0f);        // ICM45686 推荐温度（不能太高）
 
 /**
@@ -80,6 +96,16 @@ PARAM_DEFINE_FLOAT(SENS_IMU2_TEMP, 42.0f);        // ICM45686 推荐温度（不
  * @decimal 3
  */
 PARAM_DEFINE_FLOAT(SENS_IMU1_TEMP_F, 0.05f);
+/**
+ * IMU heater controller feedforward value.
+ *
+ * @category system
+ * @group Sensors
+ * @unit %
+ * @min 0
+ * @max 1.0
+ * @decimal 3
+ */
 PARAM_DEFINE_FLOAT(SENS_IMU2_TEMP_F, 0.05f);
 
 /**
@@ -93,6 +119,16 @@ PARAM_DEFINE_FLOAT(SENS_IMU2_TEMP_F, 0.05f);
  * @decimal 3
  */
 PARAM_DEFINE_FLOAT(SENS_IMU1_TEMP_I, 0.025f);
+/**
+ * IMU heater controller integrator gain value.
+ *
+ * @category system
+ * @group Sensors
+ * @unit us/C
+ * @min 0
+ * @max 1.0
+ * @decimal 3
+ */
 PARAM_DEFINE_FLOAT(SENS_IMU2_TEMP_I, 0.025f);
 
 /**
@@ -106,4 +142,14 @@ PARAM_DEFINE_FLOAT(SENS_IMU2_TEMP_I, 0.025f);
  * @decimal 3
  */
 PARAM_DEFINE_FLOAT(SENS_IMU1_TEMP_P, 1.0f);
+/**
+ * IMU heater controller proportional gain value.
+ *
+ * @category system
+ * @group Sensors
+ * @unit us/C
+ * @min 0
+ * @max 2.0
+ * @decimal 3
+ */
 PARAM_DEFINE_FLOAT(SENS_IMU2_TEMP_P, 1.0f);
