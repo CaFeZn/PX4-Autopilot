@@ -31,7 +31,7 @@
 #
 ############################################################################
 if("${PX4_BOARD_LABEL}" STREQUAL  "bootloader")
-	add_library(drivers_board
+	px4_add_library(drivers_board
 		bootloader_main.c
 		usb.c
 	)
@@ -44,7 +44,7 @@ if("${PX4_BOARD_LABEL}" STREQUAL  "bootloader")
 	target_include_directories(drivers_board PRIVATE ${PX4_SOURCE_DIR}/platforms/nuttx/src/bootloader/common)
 
 else()
-	add_library(drivers_board
+	px4_add_library(drivers_board
 		i2c.cpp
 		init.c
 		led.c
