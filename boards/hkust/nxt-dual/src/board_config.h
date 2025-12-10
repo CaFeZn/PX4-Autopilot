@@ -121,8 +121,8 @@
 
 /* Spare GPIO */
 #define GPIO_PA4                       	/* PA4 */  (GPIO_INPUT|GPIO_PULLUP|GPIO_PORTA|GPIO_PIN4)
-#define GPIO_PC0                       	/* PC0 */  (GPIO_OUTPUT | GPIO_PUSHPULL | GPIO_SPEED_2MHz | GPIO_OUTPUT_CLEAR | GPIO_PORTC | GPIO_PIN0)
-#define GPIO_PC1                       	/* PC1 */  (GPIO_OUTPUT | GPIO_PUSHPULL | GPIO_SPEED_2MHz | GPIO_OUTPUT_CLEAR | GPIO_PORTC | GPIO_PIN1)
+#define GPIO_PC0                       	/* PC0 */  (GPIO_OUTPUT | GPIO_PUSHPULL | GPIO_SPEED_50MHz | GPIO_OUTPUT_CLEAR | GPIO_PORTC | GPIO_PIN0)
+#define GPIO_PC1                       	/* PC1 */  (GPIO_OUTPUT | GPIO_PUSHPULL | GPIO_SPEED_50MHz | GPIO_OUTPUT_CLEAR | GPIO_PORTC | GPIO_PIN1)
 /* Tone alarm output */
 
 #define TONE_ALARM_TIMER        4 /* Timer 4 */
@@ -155,6 +155,7 @@
  * Heater
 */
 #define GPIO_HEATER_OUTPUT
+#define HEATER_GPIO
 
 #define GPIO_HEATER1		GPIO_PC0
 #define GPIO_HEATER2		GPIO_PC1
