@@ -1,5 +1,0 @@
-menuconfig DRIVERS_HEATER_MULTI
-	bool "heater_multi"
-	default n
-	---help---
-		Enable support for heater_multi

@@ -1,0 +1,5 @@
+menuconfig DRIVERS_HEATER1
+	bool "heater1"
+	default n
+	---help---
+		Enable support for heater

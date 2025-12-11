@@ -1,6 +1,6 @@
 ############################################################################
 #
-#   Copyright (c) 2012-2022 PX4 Development Team. All rights reserved.
+#   Copyright (c) 2016 PX4 Development Team. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,9 +31,9 @@
 #
 ############################################################################
 px4_add_module(
-	MODULE drivers__heater_multi
-	MAIN heater_multi
+	MODULE drivers__heater1
+	MAIN heater1
 	COMPILE_FLAGS
 	SRCS
-		heater_multi.cpp
+		heater.cpp
 	)

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2012-2022 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2018-19 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,33 +31,25 @@
  *
  ****************************************************************************/
 
- /**
+/**
  * @file heater_params.c
  * Heater parameters.
  *
  * @author Mark Sauder <mcsauder@gmail.com>
  * @author Alex Klimaj <alexklimaj@gmail.com>
  * @author Jake Dahl <dahl.jakejacob@gmail.com>
- * @author CaFeZn <1837781998@qq.com>
  */
 
 /**
- * Target IMU1 device ID to regulate temperature.
+ * Target IMU device ID to regulate temperature.
  *
  * @category system
  * @group Sensors
  */
-PARAM_DEFINE_INT32(SENS_IMU_ID1, 0);
-/**
- * Target IMU2 device ID to regulate temperature.
- *
- * @category system
- * @group Sensors
- */
-PARAM_DEFINE_INT32(SENS_IMU_ID2, 0);
+PARAM_DEFINE_INT32(SENS_TEMP_ID2, 0);
 
 /**
- * Target IMU1 temperature.
+ * Target IMU temperature.
  *
  * @category system
  * @group Sensors
@@ -66,32 +58,10 @@ PARAM_DEFINE_INT32(SENS_IMU_ID2, 0);
  * @max 85.0
  * @decimal 3
  */
-PARAM_DEFINE_FLOAT(SENS_IMU_TEMP1, 55.0f);
-/**
- * Target IMU2 temperature.
- *
- * @category system
- * @group Sensors
- * @unit celcius
- * @min 0
- * @max 85.0
- * @decimal 3
- */
-PARAM_DEFINE_FLOAT(SENS_IMU_TEMP2, 42.0f);
+PARAM_DEFINE_FLOAT(SENS_IMU_TEMP2, 55.0f);
 
 /**
- * IMU heater controller1 feedforward value.
- *
- * @category system
- * @group Sensors
- * @unit %
- * @min 0
- * @max 1.0
- * @decimal 3
- */
-PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_F1, 0.05f);
-/**
- * IMU heater controller2 feedforward value.
+ * IMU heater controller feedforward value.
  *
  * @category system
  * @group Sensors
@@ -103,18 +73,7 @@ PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_F1, 0.05f);
 PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_F2, 0.05f);
 
 /**
- * IMU heater controller1 integrator gain value.
- *
- * @category system
- * @group Sensors
- * @unit us/C
- * @min 0
- * @max 1.0
- * @decimal 3
- */
-PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_I1, 0.025f);
-/**
- * IMU heater controller2 integrator gain value.
+ * IMU heater controller integrator gain value.
  *
  * @category system
  * @group Sensors
@@ -126,18 +85,7 @@ PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_I1, 0.025f);
 PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_I2, 0.025f);
 
 /**
- * IMU heater controller1 proportional gain value.
- *
- * @category system
- * @group Sensors
- * @unit us/C
- * @min 0
- * @max 2.0
- * @decimal 3
- */
-PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_P1, 1.0f);
-/**
- * IMU heater controller2 proportional gain value.
+ * IMU heater controller proportional gain value.
  *
  * @category system
  * @group Sensors

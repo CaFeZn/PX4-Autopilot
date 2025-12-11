@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2012-2022 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2018-20 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,6 @@
  * @author Alex Klimaj <alexklimaj@gmail.com>
  * @author Jake Dahl <dahl.jakejacob@gmail.com>
  * @author Jacob Crabill <jacob@flyvoly.com>
- * @author CaFeZn <1837781998@qq.com>
  */
 
 #pragma once
@@ -61,14 +60,13 @@ using namespace time_literals;
 
 #define CONTROLLER_PERIOD_DEFAULT    10000
 #define TEMPERATURE_TARGET_THRESHOLD 2.5f
-#define IMU_INSTANCES_NUMBER 2
 
-class Heater : public ModuleBase<Heater>, public ModuleParams, public px4::ScheduledWorkItem
+class Heater1 : public ModuleBase<Heater1>, public ModuleParams, public px4::ScheduledWorkItem
 {
 public:
-	Heater();
+	Heater1();
 
-	virtual ~Heater();
+	virtual ~Heater1();
 
 	/**
 	 * @see ModuleBase::custom_command().
@@ -105,18 +103,18 @@ public:
 
 private:
 
-	/** Disables the heater (by GPIO). */
+	/** Disables the heater (either by GPIO or PX4IO). */
 	void disable_heater();
 
-	/** Turns the heater on (by GPIO). */
-	void heater_on(uint8_t idx);
+	/** Turns the heater on (either by GPIO or PX4IO). */
+	void heater_on();
 
-	/** Turns the heater off (by GPIO). */
-	void heater_off(uint8_t idx);
+	/** Turns the heater off (either by GPIO or PX4IO). */
+	void heater_off();
 
 	void initialize();
 
-	/** Enables / configures the heater (by GPIO). */
+	/** Enables / configures the heater (either by GPIO or PX4IO). */
 	void initialize_heater_io();
 
 	/** @brief Called once to initialize uORB topics. */
@@ -133,8 +131,6 @@ private:
 	 */
 	void update_params(const bool force = false);
 
-	void heater_set(uint8_t idx, bool enable);
-
 	/** Work queue struct for the scheduler. */
 	static struct work_s _work;
 
@@ -143,44 +139,31 @@ private:
 	int _io_fd {-1};
 #endif
 
-	bool _heater_initialized[IMU_INSTANCES_NUMBER] = {false, false};
-   	bool _heater_on[IMU_INSTANCES_NUMBER] = {false, false};
-   	bool _temperature_target_met[IMU_INSTANCES_NUMBER] = {false, false};
+	bool _heater_initialized     = false;
+	bool _heater_on              = false;
+	bool _temperature_target_met = false;
 
 	int _controller_period_usec = CONTROLLER_PERIOD_DEFAULT;
-    	int _controller_time_on_usec[IMU_INSTANCES_NUMBER] = {0, 0};
+	int _controller_time_on_usec = 0;
 
-	float _integrator_value[IMU_INSTANCES_NUMBER] = {0.0f, 0.0f};
-   	float _proportional_value[IMU_INSTANCES_NUMBER] = {0.0f, 0.0f};
+	float _integrator_value   = 0.0f;
+	float _proportional_value = 0.0f;
 
-	uORB::PublicationMulti<heater_status_s> _heater_status_pub[IMU_INSTANCES_NUMBER]{
-		{ORB_ID(heater_status)},
-		{ORB_ID(heater_status)}
-		};
-
+	uORB::PublicationMulti<heater_status_s> _heater_status_pub{{ORB_ID(heater_status)}};
 
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
-	uORB::Subscription _sensor_accel_sub[IMU_INSTANCES_NUMBER] {{ORB_ID(sensor_accel)}, {ORB_ID(sensor_accel)}};
+	uORB::Subscription _sensor_accel_sub{{ORB_ID(sensor_accel)}};
 
-	uint32_t _sensor_device_id[IMU_INSTANCES_NUMBER] {0, 0}; // 记录 IMU 1/2 实际的 device_id
-	uint8_t _current_imu_param_index[IMU_INSTANCES_NUMBER] {0, 1}; // 记录 IMU 1/2 对应参数数组的索引
+	uint32_t _sensor_device_id{0};
 
-	float _temperature_last[IMU_INSTANCES_NUMBER] {NAN, NAN};
+	float _temperature_last{NAN};
 
-	// 参数句柄
-	param_t _param_imu_temp_f[IMU_INSTANCES_NUMBER]{PARAM_INVALID, PARAM_INVALID};		// 前馈句柄
-	param_t _param_imu_temp_i[IMU_INSTANCES_NUMBER]{PARAM_INVALID, PARAM_INVALID};		// KP句柄
-	param_t _param_imu_temp_p[IMU_INSTANCES_NUMBER]{PARAM_INVALID, PARAM_INVALID};		// KI句柄
-	param_t _param_imu_temp[IMU_INSTANCES_NUMBER]{PARAM_INVALID, PARAM_INVALID};		// 设定温度句柄
-	param_t _param_sens_temp_id[IMU_INSTANCES_NUMBER]{PARAM_INVALID, PARAM_INVALID};	// IMU ID句柄
-
-	// 参数缓存值（在update_params中更新）
-	float _param_cached_temp_f[IMU_INSTANCES_NUMBER]{0.05f, 0.05f};		// 前馈 缓存值
-	float _param_cached_temp_i[IMU_INSTANCES_NUMBER]{0.025f, 0.025f};	// KP 缓存值
-	float _param_cached_temp_p[IMU_INSTANCES_NUMBER]{1.0f, 1.0f};		// KI 缓存值
-	float _param_cached_temp[IMU_INSTANCES_NUMBER]{45.0f, 45.0f};		// 设定温度 缓存值
-	int32_t _param_cached_sens_id[IMU_INSTANCES_NUMBER]{0, 0};		// IMU ID 缓存值
-
+	DEFINE_PARAMETERS(
+		(ParamFloat<px4::params::SENS_IMU_TEMP_F1>) _param_sens_imu_temp_ff,
+		(ParamFloat<px4::params::SENS_IMU_TEMP_I1>)  _param_sens_imu_temp_i,
+		(ParamFloat<px4::params::SENS_IMU_TEMP_P1>)  _param_sens_imu_temp_p,
+		(ParamFloat<px4::params::SENS_IMU_TEMP1>)    _param_sens_imu_temp,
+		(ParamInt<px4::params::SENS_TEMP_ID1>)       _param_sens_temp_id
+	)
 };
-
