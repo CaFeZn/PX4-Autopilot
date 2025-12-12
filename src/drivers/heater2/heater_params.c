@@ -38,6 +38,7 @@
  * @author Mark Sauder <mcsauder@gmail.com>
  * @author Alex Klimaj <alexklimaj@gmail.com>
  * @author Jake Dahl <dahl.jakejacob@gmail.com>
+ * @author CaFeZn <1837781998@qq.com>
  */
 
 /**
@@ -46,7 +47,7 @@
  * @category system
  * @group Sensors
  */
-PARAM_DEFINE_INT32(SENS_TEMP_ID, 0);
+PARAM_DEFINE_INT32(SENS_TEMP_ID2, 0);
 
 /**
  * Target IMU temperature.
@@ -58,7 +59,7 @@ PARAM_DEFINE_INT32(SENS_TEMP_ID, 0);
  * @max 85.0
  * @decimal 3
  */
-PARAM_DEFINE_FLOAT(SENS_IMU_TEMP, 55.0f);
+PARAM_DEFINE_FLOAT(SENS_IMU_TEMP2, 55.0f);
 
 /**
  * IMU heater controller feedforward value.
@@ -70,7 +71,7 @@ PARAM_DEFINE_FLOAT(SENS_IMU_TEMP, 55.0f);
  * @max 1.0
  * @decimal 3
  */
-PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_FF, 0.05f);
+PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_F2, 0.05f);
 
 /**
  * IMU heater controller integrator gain value.
@@ -82,7 +83,7 @@ PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_FF, 0.05f);
  * @max 1.0
  * @decimal 3
  */
-PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_I, 0.025f);
+PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_I2, 0.025f);
 
 /**
  * IMU heater controller proportional gain value.
@@ -94,4 +95,4 @@ PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_I, 0.025f);
  * @max 2.0
  * @decimal 3
  */
-PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_P, 1.0f);
+PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_P2, 1.0f);

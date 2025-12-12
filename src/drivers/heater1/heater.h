@@ -38,6 +38,7 @@
  * @author Alex Klimaj <alexklimaj@gmail.com>
  * @author Jake Dahl <dahl.jakejacob@gmail.com>
  * @author Jacob Crabill <jacob@flyvoly.com>
+ * @author CaFeZn <1837781998@qq.com>
  */
 
 #pragma once
@@ -48,6 +49,7 @@
 #include <px4_platform_common/module_params.h>
 #include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
 #include <uORB/Publication.hpp>
+#include <uORB/PublicationMulti.hpp>
 #include <uORB/SubscriptionInterval.hpp>
 #include <uORB/topics/heater_status.h>
 #include <uORB/topics/parameter_update.h>
@@ -60,12 +62,12 @@ using namespace time_literals;
 #define CONTROLLER_PERIOD_DEFAULT    10000
 #define TEMPERATURE_TARGET_THRESHOLD 2.5f
 
-class Heater : public ModuleBase<Heater>, public ModuleParams, public px4::ScheduledWorkItem
+class Heater1 : public ModuleBase<Heater1>, public ModuleParams, public px4::ScheduledWorkItem
 {
 public:
-	Heater();
+	Heater1();
 
-	virtual ~Heater();
+	virtual ~Heater1();
 
 	/**
 	 * @see ModuleBase::custom_command().
@@ -148,21 +150,21 @@ private:
 	float _integrator_value   = 0.0f;
 	float _proportional_value = 0.0f;
 
-	uORB::Publication<heater_status_s> _heater_status_pub{ORB_ID(heater_status)};
+	uORB::PublicationMulti<heater_status_s> _heater_status_pub{{ORB_ID(heater_status)}};
 
 	uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update), 1_s};
 
-	uORB::Subscription _sensor_accel_sub{ORB_ID(sensor_accel)};
+	uORB::Subscription _sensor_accel_sub{{ORB_ID(sensor_accel)}};
 
 	uint32_t _sensor_device_id{0};
 
 	float _temperature_last{NAN};
 
 	DEFINE_PARAMETERS(
-		(ParamFloat<px4::params::SENS_IMU_TEMP_FF>) _param_sens_imu_temp_ff,
-		(ParamFloat<px4::params::SENS_IMU_TEMP_I>)  _param_sens_imu_temp_i,
-		(ParamFloat<px4::params::SENS_IMU_TEMP_P>)  _param_sens_imu_temp_p,
-		(ParamFloat<px4::params::SENS_IMU_TEMP>)    _param_sens_imu_temp,
-		(ParamInt<px4::params::SENS_TEMP_ID>)       _param_sens_temp_id
+		(ParamFloat<px4::params::SENS_IMU_TEMP_F1>) _param_sens_imu_temp_ff,
+		(ParamFloat<px4::params::SENS_IMU_TEMP_I1>)  _param_sens_imu_temp_i,
+		(ParamFloat<px4::params::SENS_IMU_TEMP_P1>)  _param_sens_imu_temp_p,
+		(ParamFloat<px4::params::SENS_IMU_TEMP1>)    _param_sens_imu_temp,
+		(ParamInt<px4::params::SENS_TEMP_ID1>)       _param_sens_temp_id
 	)
 };

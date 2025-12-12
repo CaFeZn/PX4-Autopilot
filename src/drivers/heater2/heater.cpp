@@ -39,6 +39,7 @@
  * @author Jake Dahl <dahl.jakejacob@gmail.com>
  * @author Mohammed Kabir <mhkabir@mit.edu>
  * @author Jacob Crabill <jacob@flyvoly.com>
+ * @author CaFeZn <1837781998@qq.com>
  */
 
 #include "heater.h"
@@ -49,18 +50,22 @@
 #include <drivers/drv_io_heater.h>
 
 #if defined(BOARD_USES_PX4IO_VERSION) and defined(PX4IO_HEATER_ENABLED)
-// Heater on some boards is on IO MCU
+// Heater2 on some boards is on IO MCU
 // Use ioctl calls to IO driver to turn heater on/off
 #  define HEATER_PX4IO
 #else
 // Use direct calls to turn GPIO pin on/off
-#  ifndef GPIO_HEATER_OUTPUT
-#  error "To use the heater driver, the board_config.h must define and initialize GPIO_HEATER_OUTPUT"
-#  endif
+// Multiple IMU heating pins (must be defined in board_config.h)
+#ifndef GPIO_HEATER2
+#  error "Please define GPIO_HEATER2 in board_config.h"
+#endif
 #  define HEATER_GPIO
 #endif
 
-Heater::Heater() :
+#define HEATER_OUTPUT_EN(enable) px4_arch_gpiowrite(GPIO_HEATER2,enable)
+
+
+Heater2::Heater2() :
 	ModuleParams(nullptr),
 	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::lp_default)
 {
@@ -77,12 +82,12 @@ Heater::Heater() :
 	_heater_status_pub.advertise();
 }
 
-Heater::~Heater()
+Heater2::~Heater2()
 {
 	disable_heater();
 }
 
-int Heater::custom_command(int argc, char *argv[])
+int Heater2::custom_command(int argc, char *argv[])
 {
 	// Check if the driver is running.
 	if (!is_running()) {
@@ -93,7 +98,7 @@ int Heater::custom_command(int argc, char *argv[])
 	return print_usage("Unrecognized command.");
 }
 
-void Heater::disable_heater()
+void Heater2::disable_heater()
 {
 	// Reset heater to off state.
 #ifdef HEATER_PX4IO
@@ -104,11 +109,11 @@ void Heater::disable_heater()
 #endif
 
 #ifdef HEATER_GPIO
-	px4_arch_configgpio(GPIO_HEATER_OUTPUT);
+	px4_arch_configgpio(GPIO_HEATER2);
 #endif
 }
 
-void Heater::initialize_heater_io()
+void Heater2::initialize_heater_io()
 {
 	// Initialize heater to off state.
 #ifdef HEATER_PX4IO
@@ -123,11 +128,11 @@ void Heater::initialize_heater_io()
 #endif
 
 #ifdef HEATER_GPIO
-	px4_arch_configgpio(GPIO_HEATER_OUTPUT);
+	px4_arch_configgpio(GPIO_HEATER2);
 #endif
 }
 
-void Heater::heater_off()
+void Heater2::heater_off()
 {
 #ifdef HEATER_PX4IO
 
@@ -142,7 +147,7 @@ void Heater::heater_off()
 #endif
 }
 
-void Heater::heater_on()
+void Heater2::heater_on()
 {
 #ifdef HEATER_PX4IO
 
@@ -157,29 +162,27 @@ void Heater::heater_on()
 #endif
 }
 
-bool Heater::initialize_topics()
+bool Heater2::initialize_topics()
 {
-	for (uint8_t i = 0; i < ORB_MULTI_MAX_INSTANCES; i++) {
-		uORB::SubscriptionData<sensor_accel_s> sensor_accel_sub{ORB_ID(sensor_accel), i};
+	uORB::SubscriptionData<sensor_accel_s> sensor_accel_sub{ORB_ID(sensor_accel), 1};
 
-		if (sensor_accel_sub.get().timestamp != 0 &&
-		    sensor_accel_sub.get().device_id != 0 &&
-		    PX4_ISFINITE(sensor_accel_sub.get().temperature)) {
+	if (sensor_accel_sub.get().timestamp != 0 &&
+	    sensor_accel_sub.get().device_id != 0 &&
+	    PX4_ISFINITE(sensor_accel_sub.get().temperature)) {
 
-			// If the correct ID is found, exit the for-loop with _sensor_accel_sub pointing to the correct instance.
-			if (sensor_accel_sub.get().device_id == (uint32_t)_param_sens_temp_id.get()) {
-				_sensor_accel_sub.ChangeInstance(i);
-				_sensor_device_id = sensor_accel_sub.get().device_id;
-				initialize_heater_io();
-				return true;
-			}
+		// If the correct ID is found, exit the for-loop with _sensor_accel_sub pointing to the correct instance.
+		if (sensor_accel_sub.get().device_id == (uint32_t)_param_sens_temp_id.get()) {
+			_sensor_accel_sub.ChangeInstance(1);
+			_sensor_device_id = sensor_accel_sub.get().device_id;
+			initialize_heater_io();
+			return true;
 		}
 	}
 
 	return false;
 }
 
-void Heater::Run()
+void Heater2::Run()
 {
 	if (should_exit()) {
 #if defined(HEATER_PX4IO)
@@ -247,7 +250,7 @@ void Heater::Run()
 	publish_status();
 }
 
-void Heater::publish_status()
+void Heater2::publish_status()
 {
 	heater_status_s status{};
 	status.device_id               = _sensor_device_id;
@@ -272,7 +275,7 @@ void Heater::publish_status()
 	_heater_status_pub.publish(status);
 }
 
-int Heater::start()
+int Heater2::start()
 {
 	// Exit the driver if the sensor ID does not match the desired sensor.
 	if (_param_sens_temp_id.get() == 0) {
@@ -286,9 +289,9 @@ int Heater::start()
 	return PX4_OK;
 }
 
-int Heater::task_spawn(int argc, char *argv[])
+int Heater2::task_spawn(int argc, char *argv[])
 {
-	Heater *heater = new Heater();
+	Heater2 *heater = new Heater2();
 
 	if (!heater) {
 		PX4_ERR("driver allocation failed");
@@ -302,7 +305,7 @@ int Heater::task_spawn(int argc, char *argv[])
 	return 0;
 }
 
-void Heater::update_params(const bool force)
+void Heater2::update_params(const bool force)
 {
 	if (_parameter_update_sub.updated() || force) {
 		// clear update
@@ -314,7 +317,7 @@ void Heater::update_params(const bool force)
 	}
 }
 
-int Heater::print_usage(const char *reason)
+int Heater2::print_usage(const char *reason)
 {
 	if (reason) {
 		printf("%s\n\n", reason);
@@ -328,14 +331,14 @@ Background process running periodically on the LP work queue to regulate IMU tem
 This task can be started at boot from the startup scripts by setting SENS_EN_THERMAL or via CLI.
 )DESCR_STR");
 
-	PRINT_MODULE_USAGE_NAME("heater", "system");
+	PRINT_MODULE_USAGE_NAME("heater2", "system");
 	PRINT_MODULE_USAGE_COMMAND("start");
 	PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
 
 	return 0;
 }
 
-extern "C" __EXPORT int heater_main(int argc, char *argv[])
+extern "C" __EXPORT int heater2_main(int argc, char *argv[])
 {
-	return Heater::main(argc, argv);
+	return Heater2::main(argc, argv);
 }
