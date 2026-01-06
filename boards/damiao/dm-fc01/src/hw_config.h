@@ -96,7 +96,7 @@
 #define INTERFACE_USART                6
 #define INTERFACE_USART_CONFIG         "/dev/ttyS5,57600"
 #define BOOT_DELAY_ADDRESS             0x000001a0
-#define BOARD_TYPE                     1013
+#define BOARD_TYPE                     21001
 #define BOARD_FLASH_SECTORS            (14)
 #define BOARD_FLASH_SIZE               (16 * 128 * 1024)
 #define APP_RESERVATION_SIZE 	       (1 * 128 * 1024)
