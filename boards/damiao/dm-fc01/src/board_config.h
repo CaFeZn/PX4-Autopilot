@@ -58,7 +58,7 @@
 
 /* LEDs are driven with push open drain to support Anode to 5V or 3.3V */
 
-#  define GPIO_nLED_RED         /* PD15 */  (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_50MHz|GPIO_OUTPUT_SET|GPIO_PORTD|GPIO_PIN15)
+#  define GPIO_nLED_RED         /* not allocate yet */  // (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_50MHz|GPIO_OUTPUT_SET|GPIO_PORTD|GPIO_PIN15)
 #  define GPIO_nLED_GREEN       /* PD11 */  (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_50MHz|GPIO_OUTPUT_SET|GPIO_PORTD|GPIO_PIN11)
 #  define GPIO_nLED_BLUE        /* PB15 */  (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_50MHz|GPIO_OUTPUT_SET|GPIO_PORTB|GPIO_PIN15)
 
@@ -95,7 +95,7 @@
 /* Define GPIO pins used as ADC N.B. Channel numbers must match below  */
 /* Define Channel numbers must match above GPIO pin IN(n)*/
 #define ADC_BATTERY_VOLTAGE_CHANNEL             ADC12_CH(4)
-#define ADC_BATTERY_CURRENT_CHANNEL             ADC12_CH(5)
+#define ADC_BATTERY_CURRENT_CHANNEL             ADC12_CH(8)
 
 #define ADC_CHANNELS \
 	((1 << ADC_BATTERY_VOLTAGE_CHANNEL) | \
@@ -137,7 +137,7 @@
  *
  * PD0  OTG_FS_VBUS VBUS sensing
  */
-#define GPIO_OTGFS_VBUS         /* PD0 */ (GPIO_INPUT|GPIO_PULLDOWN|GPIO_SPEED_100MHz|GPIO_PORTD|GPIO_PIN0)
+#define GPIO_OTGFS_VBUS         /* PA15 */ (GPIO_INPUT|GPIO_PULLDOWN|GPIO_SPEED_100MHz|GPIO_PORTA|GPIO_PIN15)
 #define BOARD_ADC_USB_CONNECTED (px4_arch_gpioread(GPIO_OTGFS_VBUS))
 
 /* High-resolution timer */
