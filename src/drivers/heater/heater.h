@@ -48,10 +48,12 @@
 #include <px4_platform_common/module_params.h>
 #include <px4_platform_common/px4_work_queue/ScheduledWorkItem.hpp>
 #include <uORB/Publication.hpp>
+#include <uORB/PublicationMulti.hpp>
 #include <uORB/SubscriptionInterval.hpp>
 #include <uORB/topics/heater_status.h>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/sensor_accel.h>
+#include <parameters/param.h>
 
 #include <mathlib/mathlib.h>
 
@@ -158,11 +160,20 @@ private:
 
 	float _temperature_last{NAN};
 
-	DEFINE_PARAMETERS(
-		(ParamFloat<px4::params::SENS_IMU_TEMP_FF>) _param_sens_imu_temp_ff,
-		(ParamFloat<px4::params::SENS_IMU_TEMP_I>)  _param_sens_imu_temp_i,
-		(ParamFloat<px4::params::SENS_IMU_TEMP_P>)  _param_sens_imu_temp_p,
-		(ParamFloat<px4::params::SENS_IMU_TEMP>)    _param_sens_imu_temp,
-		(ParamInt<px4::params::SENS_TEMP_ID>)       _param_sens_temp_id
-	)
+protected:
+	struct {
+		param_t sens_imu_temp_ff;
+		param_t sens_imu_temp_i;
+		param_t sens_imu_temp_p;
+		param_t sens_imu_temp;
+		param_t sens_temp_id;
+	} _heater_param_handles;
+
+	struct {
+		float sens_imu_temp_ff;
+		float sens_imu_temp_i;
+		float sens_imu_temp_p;
+		float sens_imu_temp;
+		int32_t sens_temp_id;
+	} _params;
 };

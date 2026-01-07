@@ -48,16 +48,35 @@
 #include <drivers/drv_hrt.h>
 #include <drivers/drv_io_heater.h>
 
+
 #if defined(BOARD_USES_PX4IO_VERSION) and defined(PX4IO_HEATER_ENABLED)
 // Heater on some boards is on IO MCU
 // Use ioctl calls to IO driver to turn heater on/off
 #  define HEATER_PX4IO
 #else
 // Use direct calls to turn GPIO pin on/off
+#  define HEATER_GPIO
 #  ifndef GPIO_HEATER_OUTPUT
 #  error "To use the heater driver, the board_config.h must define and initialize GPIO_HEATER_OUTPUT"
 #  endif
-#  define HEATER_GPIO
+#  if !(HEATER_NUM >=1 && HEATER_NUM <=3)
+#    error "HEATER_NUM must be defined 1, 2, or 3 in the board_config.h"
+#  endif
+#  if HEATER_NUM >= 1
+#    ifndef GPIO_HEATER_OUTPUT1
+#      error "The board_config.h must define every heater's GPIO"
+#    endif
+#  endif
+#  if HEATER_NUM >= 2
+#    ifndef GPIO_HEATER_OUTPUT2
+#      error "The board_config.h must define every heater's GPIO"
+#    endif
+#  endif
+#  if HEATER_NUM == 3
+#    ifndef GPIO_HEATER_OUTPUT3
+#      error "The board_config.h must define every heater's GPIO"
+#    endif
+#  endif
 #endif
 
 Heater::Heater() :
@@ -75,6 +94,8 @@ Heater::Heater() :
 #endif
 
 	_heater_status_pub.advertise();
+
+	_heater_param_handles.sens_imu_temp_ff =
 }
 
 Heater::~Heater()
