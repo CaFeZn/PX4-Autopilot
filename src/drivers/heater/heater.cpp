@@ -52,10 +52,10 @@
 #if defined(BOARD_USES_PX4IO_VERSION) and defined(PX4IO_HEATER_ENABLED)
 // Heater on some boards is on IO MCU
 // Use ioctl calls to IO driver to turn heater on/off
+// TODO: Multi-instance heater for PX4IO to be implemented
 #  define HEATER_PX4IO
 #else
 // Use direct calls to turn GPIO pin on/off
-#  define HEATER_GPIO
 #  ifndef GPIO_HEATER_OUTPUT
 #  error "To use the heater driver, the board_config.h must define and initialize GPIO_HEATER_OUTPUT"
 #  endif
@@ -63,61 +63,67 @@
 #    error "HEATER_NUM must be defined 1, 2, or 3 in the board_config.h"
 #  endif
 #  if HEATER_NUM >= 1
-#    ifndef GPIO_HEATER_OUTPUT1
+#    ifndef GPIO_HEATER1_OUTPUT
 #      error "The board_config.h must define every heater's GPIO"
 #    endif
 #  endif
 #  if HEATER_NUM >= 2
-#    ifndef GPIO_HEATER_OUTPUT2
+#    ifndef GPIO_HEATER2_OUTPUT
 #      error "The board_config.h must define every heater's GPIO"
 #    endif
 #  endif
 #  if HEATER_NUM == 3
-#    ifndef GPIO_HEATER_OUTPUT3
+#    ifndef GPIO_HEATER3_OUTPUT
 #      error "The board_config.h must define every heater's GPIO"
 #    endif
 #  endif
+#  define HEATER_GPIO
 #endif
 
-Heater::Heater() :
-	ModuleParams(nullptr),
-	ScheduledWorkItem(MODULE_NAME, px4::wq_configurations::lp_default)
+Heater *Heater::g_heater[HEATER_MAX_INSTANCES] {};
+
+Heater::Heater(uint8_t instance, const px4::wq_config_t &wq) :
+	ScheduledWorkItem(MODULE_NAME, wq)
+	, ModuleParams(nullptr)
+	, _instance(instance) //
 {
-#ifdef HEATER_PX4IO
-	_io_fd = px4_open(IO_HEATER_DEVICE_PATH, O_RDWR);
+	// ... PX4IO 初始化逻辑 ...
 
-	if (_io_fd < 0) {
-		PX4_ERR("Unable to open heater device path");
-		return;
-	}
+	char name[32];
 
-#endif
+	// 动态查找当前实例对应的参数句柄
+	snprintf(name, sizeof(name), "HEATER%u_IMU_ID", (unsigned)_instance);
+	_param_handles.imu_id = param_find(name); //
 
-	_heater_status_pub.advertise();
+	snprintf(name, sizeof(name), "HEATER%u_TEMP", (unsigned)_instance);
+	_param_handles.temp = param_find(name); //
 
-	_heater_param_handles.sens_imu_temp_ff =
+	snprintf(name, sizeof(name), "HEATER%u_TEMP_P", (unsigned)_instance);
+	_param_handles.temp_p = param_find(name); //
+
+	snprintf(name, sizeof(name), "HEATER%u_TEMP_I", (unsigned)_instance);
+	_param_handles.temp_i = param_find(name); //
+
+	snprintf(name, sizeof(name), "HEATER%u_TEMP_FF", (unsigned)_instance);
+	_param_handles.temp_ff = param_find(name); //
+
+	// 初始化参数数值
+	update_params(true);
+
+	_heater_status_pub.advertise(); //
 }
 
 Heater::~Heater()
 {
 	disable_heater();
-}
 
-int Heater::custom_command(int argc, char *argv[])
-{
-	// Check if the driver is running.
-	if (!is_running()) {
-		PX4_INFO("not running");
-		return PX4_ERROR;
-	}
-
-	return print_usage("Unrecognized command.");
 }
 
 void Heater::disable_heater()
 {
 	// Reset heater to off state.
 #ifdef HEATER_PX4IO
+	// TODO: Multi-instance heater for PX4IO to be implemented
 	if (_io_fd >= 0) {
 		px4_ioctl(_io_fd, PX4IO_HEATER_CONTROL, HEATER_MODE_DISABLED);
 	}
@@ -125,7 +131,30 @@ void Heater::disable_heater()
 #endif
 
 #ifdef HEATER_GPIO
-	px4_arch_configgpio(GPIO_HEATER_OUTPUT);
+
+	switch (_instance) {
+	case 1 :
+#ifdef GPIO_HEATER1_OUTPUT
+		px4_arch_configgpio(GPIO_HEATER1_OUTPUT);
+#endif
+		break;
+
+	case 2 :
+#ifdef GPIO_HEATER2_OUTPUT
+		px4_arch_configgpio(GPIO_HEATER2_OUTPUT);
+#endif
+		break;
+
+	case 3 :
+#ifdef GPIO_HEATER3_OUTPUT
+		px4_arch_configgpio(GPIO_HEATER3_OUTPUT);
+#endif
+		break;
+
+	default:
+		break;
+	}
+
 #endif
 }
 
@@ -133,6 +162,7 @@ void Heater::initialize_heater_io()
 {
 	// Initialize heater to off state.
 #ifdef HEATER_PX4IO
+	// TODO: Multi-instance heater for PX4IO to be implemented
 	if (_io_fd < 0) {
 		_io_fd = px4_open(IO_HEATER_DEVICE_PATH, O_RDWR);
 	}
@@ -144,7 +174,30 @@ void Heater::initialize_heater_io()
 #endif
 
 #ifdef HEATER_GPIO
-	px4_arch_configgpio(GPIO_HEATER_OUTPUT);
+
+	switch (_instance) {
+	case 1 :
+#ifdef GPIO_HEATER1_OUTPUT
+		px4_arch_configgpio(GPIO_HEATER1_OUTPUT);
+#endif
+		break;
+
+	case 2 :
+#ifdef GPIO_HEATER2_OUTPUT
+		px4_arch_configgpio(GPIO_HEATER2_OUTPUT);
+#endif
+		break;
+
+	case 3 :
+#ifdef GPIO_HEATER3_OUTPUT
+		px4_arch_configgpio(GPIO_HEATER3_OUTPUT);
+#endif
+		break;
+
+	default:
+		break;
+	}
+
 #endif
 }
 
@@ -152,6 +205,7 @@ void Heater::heater_off()
 {
 #ifdef HEATER_PX4IO
 
+	// TODO: Multi-instance heater for PX4IO to be implemented
 	if (_io_fd >= 0) {
 		px4_ioctl(_io_fd, PX4IO_HEATER_CONTROL, HEATER_MODE_OFF);
 	}
@@ -159,7 +213,32 @@ void Heater::heater_off()
 #endif
 
 #ifdef HEATER_GPIO
-	HEATER_OUTPUT_EN(false);
+
+	switch (_instance) {
+	case 1 :
+#ifdef GPIO_HEATER1_OUTPUT
+		px4_arch_gpiowrite(GPIO_HEATER1_OUTPUT, false);
+#endif
+		break;
+
+	case 2 :
+#ifdef GPIO_HEATER2_OUTPUT
+		px4_arch_gpiowrite(GPIO_HEATER2_OUTPUT, false);
+#endif
+		break;
+
+	case 3 :
+#ifdef GPIO_HEATER3_OUTPUT
+		px4_arch_gpiowrite(GPIO_HEATER3_OUTPUT, false);
+#endif
+		break;
+
+	default:
+		break;
+	}
+
+	// HEATER_OUTPUT_EN(false);	// TODO: aborted
+
 #endif
 }
 
@@ -167,6 +246,7 @@ void Heater::heater_on()
 {
 #ifdef HEATER_PX4IO
 
+	// TODO: Multi-instance heater for PX4IO to be implemented
 	if (_io_fd >= 0) {
 		px4_ioctl(_io_fd, PX4IO_HEATER_CONTROL, HEATER_MODE_ON);
 	}
@@ -174,35 +254,142 @@ void Heater::heater_on()
 #endif
 
 #ifdef HEATER_GPIO
-	HEATER_OUTPUT_EN(true);
+
+	switch (_instance) {
+	case 1 :
+#ifdef GPIO_HEATER1_OUTPUT
+		px4_arch_gpiowrite(GPIO_HEATER1_OUTPUT, true);
+#endif
+		break;
+
+	case 2 :
+#ifdef GPIO_HEATER2_OUTPUT
+		px4_arch_gpiowrite(GPIO_HEATER2_OUTPUT, true);
+#endif
+		break;
+
+	case 3 :
+#ifdef GPIO_HEATER3_OUTPUT
+		px4_arch_gpiowrite(GPIO_HEATER3_OUTPUT, true);
+#endif
+		break;
+
+	default:
+		break;
+	}
+
+	// HEATER_OUTPUT_EN(true);	// TODO: aborted
 #endif
 }
 
 bool Heater::initialize_topics()
 {
-	for (uint8_t i = 0; i < ORB_MULTI_MAX_INSTANCES; i++) {
-		uORB::SubscriptionData<sensor_accel_s> sensor_accel_sub{ORB_ID(sensor_accel), i};
+	// Force a single read of the parameters to ensure _params.imu_id is already up to date.
+	update_params(true);
 
-		if (sensor_accel_sub.get().timestamp != 0 &&
-		    sensor_accel_sub.get().device_id != 0 &&
-		    PX4_ISFINITE(sensor_accel_sub.get().temperature)) {
+	if (!_heater_initialized) {
+		PX4_ERR("heater %u: params not initialized", (unsigned)_instance);
+		return false;
+	}
 
-			// If the correct ID is found, exit the for-loop with _sensor_accel_sub pointing to the correct instance.
-			if (sensor_accel_sub.get().device_id == (uint32_t)_param_sens_temp_id.get()) {
-				_sensor_accel_sub.ChangeInstance(i);
-				_sensor_device_id = sensor_accel_sub.get().device_id;
-				initialize_heater_io();
-				return true;
-			}
+	const int32_t target = _params.imu_id;
+
+	// <0 Disabled
+	if (target < 0) {
+		PX4_INFO("heater %u disabled (HEATER%u_IMU_ID=%ld)",
+			 (unsigned)_instance, (unsigned)_instance, (long)target);
+		return false;
+	}
+
+	// Scan multiple instances of accel, matching device_id or auto-select
+	int8_t selected_instance = -1;
+	sensor_accel_s accel{};
+
+
+	for (uint8_t i = 0; i < 3; i++) {
+		uORB::Subscription s{ORB_ID(sensor_accel), i};
+
+		if (!s.advertised()) {
+			continue;
+		}
+
+		sensor_accel_s a{};
+
+		if (!s.copy(&a)) {
+			continue;
+		}
+
+		if (target == 0) {
+			// Select the first available option
+			selected_instance = i;
+			accel = a;
+			break;
+		}
+
+		if ((uint32_t)target == a.device_id) {
+			selected_instance = i;
+			accel = a;
+			break;
 		}
 	}
 
-	return false;
+	if (selected_instance < 0) {
+		if (target == 0) {
+			PX4_ERR("heater %u: no sensor_accel instances available", (unsigned)_instance);
+
+		} else {
+			PX4_ERR("heater %u: no accel matches device_id=%ld", (unsigned)_instance, (long)target);
+		}
+
+		return false;
+	}
+
+	_sensor_device_id = accel.device_id;
+
+	// Switch subscription to this instance
+	_sensor_accel_sub.ChangeInstance(selected_instance);
+	PX4_INFO("heater %u bound accel instance %d (device_id=%lu)",
+		 (unsigned)_instance, selected_instance, (unsigned long)_sensor_device_id);
+
+	return true;
 }
+
+
+void Heater::update_params(bool force)
+{
+	if (force || _parameter_update_sub.updated()) {
+		parameter_update_s u{};
+		_parameter_update_sub.copy(&u); //
+
+		if (_param_handles.imu_id != PARAM_INVALID) {
+			param_get(_param_handles.imu_id, &_params.imu_id);
+		}
+
+		if (_param_handles.temp != PARAM_INVALID) {
+			param_get(_param_handles.temp, &_params.temp);
+		}
+
+		if (_param_handles.temp_p != PARAM_INVALID) {
+			param_get(_param_handles.temp_p, &_params.temp_p);
+		}
+
+		if (_param_handles.temp_i != PARAM_INVALID) {
+			param_get(_param_handles.temp_i, &_params.temp_i);
+		}
+
+		if (_param_handles.temp_ff != PARAM_INVALID) {
+			param_get(_param_handles.temp_ff, &_params.temp_ff);
+		}
+
+		_heater_initialized = true;
+	}
+}
+
+
 
 void Heater::Run()
 {
-	if (should_exit()) {
+	if (_should_exit) {
 #if defined(HEATER_PX4IO)
 
 		// must be closed from wq thread
@@ -211,7 +398,13 @@ void Heater::Run()
 		}
 
 #endif
-		exit_and_cleanup();
+		ScheduleClear();
+
+		// Ensure heating is turned off (avoid leaving it in the ON position).
+		heater_off();
+
+		delete Heater::g_heater[_instance];
+		Heater::g_heater[_instance] = nullptr;
 		return;
 	}
 
@@ -238,16 +431,16 @@ void Heater::Run()
 
 		// Update the current IMU sensor temperature if valid.
 		if (PX4_ISFINITE(sensor_accel.temperature)) {
-			temperature_delta = _param_sens_imu_temp.get() - sensor_accel.temperature;
+			temperature_delta = _params.temp - sensor_accel.temperature;
 			_temperature_last = sensor_accel.temperature;
 		}
 
-		_proportional_value = temperature_delta * _param_sens_imu_temp_p.get();
-		_integrator_value += temperature_delta * _param_sens_imu_temp_i.get();
+		_proportional_value = temperature_delta * _params.temp_p;
+		_integrator_value += temperature_delta * _params.temp_i;
 
 		_integrator_value = math::constrain(_integrator_value, -0.25f, 0.25f);
 
-		_controller_time_on_usec = static_cast<int>((_param_sens_imu_temp_ff.get() + _proportional_value +
+		_controller_time_on_usec = static_cast<int>((_params.temp_ff + _proportional_value +
 					   _integrator_value) * static_cast<float>(_controller_period_usec));
 
 		_controller_time_on_usec = math::constrain(_controller_time_on_usec, 0, _controller_period_usec);
@@ -274,13 +467,13 @@ void Heater::publish_status()
 	status.device_id               = _sensor_device_id;
 	status.heater_on               = _heater_on;
 	status.temperature_sensor      = _temperature_last;
-	status.temperature_target      = _param_sens_imu_temp.get();
+	status.temperature_target      = _params.temp;
 	status.temperature_target_met  = _temperature_target_met;
 	status.controller_period_usec  = _controller_period_usec;
 	status.controller_time_on_usec = _controller_time_on_usec;
 	status.proportional_value      = _proportional_value;
 	status.integrator_value        = _integrator_value;
-	status.feed_forward_value      = _param_sens_imu_temp_ff.get();
+	status.feed_forward_value      = _params.temp_ff;
 
 #ifdef HEATER_PX4IO
 	status.mode = heater_status_s::MODE_PX4IO;
@@ -296,10 +489,29 @@ void Heater::publish_status()
 int Heater::start()
 {
 	// Exit the driver if the sensor ID does not match the desired sensor.
-	if (_param_sens_temp_id.get() == 0) {
-		PX4_ERR("Valid SENS_TEMP_ID required");
-		request_stop();
-		return PX4_ERROR;
+	switch (_instance) {
+	case 1:
+		PX4_ERR("Valid HEATER1_IMU_ID required");
+		break;
+
+	case 2:
+		PX4_ERR("Valid HEATER2_IMU_ID required");
+		break;
+
+	case 3:
+		PX4_ERR("Valid HEATER3_IMU_ID required");
+		break;
+
+	default:
+		break;
+	}
+
+	stop();
+	return PX4_ERROR;
+
+	if (_params.imu_id == 0) {
+
+
 	}
 
 	update_params(true);
@@ -307,32 +519,91 @@ int Heater::start()
 	return PX4_OK;
 }
 
-int Heater::task_spawn(int argc, char *argv[])
+void Heater::stop()
 {
-	Heater *heater = new Heater();
+	ScheduleClear();   // Cancel subsequent scheduling to prevent re-execution.
+	_should_exit = true;
+	heater_off();
+}
 
-	if (!heater) {
-		PX4_ERR("driver allocation failed");
+int Heater::stop_all()
+{
+	for (uint8_t i = 0; i < HEATER_MAX_INSTANCES; i++) {
+		if (Heater::g_heater[i]) {
+			Heater::g_heater[i]->_should_exit = true;
+			Heater::g_heater[i]->stop();
+		}
+	}
+
+	return PX4_OK;
+}
+
+bool Heater::is_running_instance(uint8_t instance)
+{
+	if (instance < 1 || instance > HEATER_MAX_INSTANCES) {
+		return false;
+	}
+
+	return Heater::g_heater[instance - 1] != nullptr;
+}
+
+bool Heater::is_running_any()
+{
+	for (uint8_t i = 0; i < HEATER_MAX_INSTANCES; i++) {
+		if (Heater::g_heater[i]) { return true; }
+	}
+
+	return false;
+}
+
+int Heater::start_instance(uint8_t instance)
+{
+	if (instance < 1 || instance > HEATER_MAX_INSTANCES) {
+		PX4_ERR("invalid instance %u", (unsigned)instance);
 		return PX4_ERROR;
 	}
 
-	_object.store(heater);
-	_task_id = task_id_is_work_queue;
+	if (Heater::is_running_instance(instance)) {
+		PX4_WARN("heater %u already running", (unsigned)instance);
+		return PX4_OK;
+	}
 
-	heater->start();
-	return 0;
+	const px4::wq_config_t &wq = px4::ins_instance_to_wq((int)instance - 1);
+
+	Heater *h = new Heater(instance, wq);
+
+	if (!h) {
+		PX4_ERR("alloc failed");
+		return PX4_ERROR;
+	}
+
+	int ret = h->start();
+
+	if (ret != PX4_OK) {
+		h->stop();
+		delete h;
+		return ret;
+	}
+
+	Heater::g_heater[instance - 1] = h;
+	return PX4_OK;
 }
 
-void Heater::update_params(const bool force)
-{
-	if (_parameter_update_sub.updated() || force) {
-		// clear update
-		parameter_update_s param_update;
-		_parameter_update_sub.copy(&param_update);
 
-		// update parameters from storage
-		ModuleParams::updateParams();
+int Heater::status()
+{
+	if (!Heater::is_running_any()) {
+		PX4_INFO("not running");
+		return PX4_OK;
 	}
+
+	for (uint8_t inst1 = 1; inst1 <= HEATER_MAX_INSTANCES; inst1++) {
+		if (Heater::is_running_instance(inst1)) {
+			PX4_INFO("instance %u: running", (unsigned)inst1);
+		}
+	}
+
+	return PX4_OK;
 }
 
 int Heater::print_usage(const char *reason)
@@ -344,7 +615,7 @@ int Heater::print_usage(const char *reason)
 	PRINT_MODULE_DESCRIPTION(
 		R"DESCR_STR(
 ### Description
-Background process running periodically on the LP work queue to regulate IMU temperature at a setpoint.
+Background process running periodically on the INS{i} queue to regulate IMU temperature at a setpoint.
 
 This task can be started at boot from the startup scripts by setting SENS_EN_THERMAL or via CLI.
 )DESCR_STR");
@@ -356,7 +627,67 @@ This task can be started at boot from the startup scripts by setting SENS_EN_THE
 	return 0;
 }
 
+
 extern "C" __EXPORT int heater_main(int argc, char *argv[])
 {
-	return Heater::main(argc, argv);
+    if (argc < 2) {
+        PX4_INFO("usage: heater {start|stop|status} [-i N]");
+        return PX4_ERROR;
+    }
+
+    if (!strcmp(argv[1], "start")) {
+
+        int ch;
+        int myoptind = 2;
+        const char *myoptarg = nullptr;
+        int instance = -1;
+
+        while ((ch = px4_getopt(argc, argv, "i:", &myoptind, &myoptarg)) != EOF) {
+            if (ch == 'i') {
+                instance = (int)strtol(myoptarg, nullptr, 10);
+            }
+        }
+
+        // Compatibility: Without parameters, only the first one is applied by default.
+        if (instance > 0) {
+            	return Heater::start_instance((uint8_t)instance);
+        } else {
+		PX4_INFO("Heater numbers start from 1, trying to start Heater1");
+            	return Heater::start_instance(1);
+        }
+    }
+
+    if (!strcmp(argv[1], "stop")) {
+	int ch;
+        int myoptind = 2;
+        const char *myoptarg = nullptr;
+        int instance = -1;
+
+        while ((ch = px4_getopt(argc, argv, "i:", &myoptind, &myoptarg)) != EOF) {
+            if (ch == 'i') {
+                instance = (int)strtol(myoptarg, nullptr, 10);
+            }
+        }
+
+	// Compatibility: Without parameters, only the first one is applied by default.
+        if (instance > 0 && instance <= HEATER_MAX_INSTANCES) {
+            if (Heater::g_heater[instance - 1]) {
+                Heater::g_heater[instance - 1]->stop();
+                return PX4_OK;
+            }
+            return PX4_ERROR;
+        } else {
+            return Heater::stop_all();
+        }
+
+
+    }
+
+    if (!strcmp(argv[1], "status")) {
+        return Heater::status();
+    }
+
+    PX4_INFO("unknown command");
+    return PX4_ERROR;
 }
+

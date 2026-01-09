@@ -156,9 +156,10 @@
 */
 #define GPIO_HEATER_OUTPUT
 #define HEATER_GPIO
+#define HEATER_NUM 2
 
-#define GPIO_HEATER1		GPIO_PC0
-#define GPIO_HEATER2		GPIO_PC1
+#define GPIO_HEATER1_OUTPUT		GPIO_PC0
+#define GPIO_HEATER2_OUTPUT		GPIO_PC1
 
 
 /* SD card bringup does not work if performed on the IDLE thread because it
@@ -184,8 +185,8 @@
 		PX4_ADC_GPIO, \
 		GPIO_TONE_ALARM_IDLE, \
 		GPIO_SPL_ADDR_SET, \
-		GPIO_HEATER1,\
-		GPIO_HEATER2,\
+		GPIO_HEATER1_OUTPUT,\
+		GPIO_HEATER2_OUTPUT,\
 	}
 
 #define BOARD_ENABLE_CONSOLE_BUFFER

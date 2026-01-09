@@ -61,23 +61,23 @@ using namespace time_literals;
 
 #define CONTROLLER_PERIOD_DEFAULT    10000
 #define TEMPERATURE_TARGET_THRESHOLD 2.5f
+#define HEATER_MAX_INSTANCES 3 	// If changed, also need to change `max_num_config_instances` in module.yaml
 
-class Heater : public ModuleBase<Heater>, public ModuleParams, public px4::ScheduledWorkItem
+class Heater : px4::ScheduledWorkItem, public ModuleParams
 {
 public:
-	Heater();
+	Heater(uint8_t instance, const px4::wq_config_t &wq);
 
 	virtual ~Heater();
 
 	/**
-	 * @see ModuleBase::custom_command().
-	 * @brief main Main entry point to the module that should be
-	 *        called directly from the module's main method.
-	 * @param argc The input argument count.
-	 * @param argv Pointer to the input argument array.
-	 * @return Returns 0 iff successful, -1 otherwise.
+	 * @brief Initiates the heater driver work queue, starts a new background task,
+	 *        and fails if it is already running.
+	 * @return Returns 1 iff start was successful.
 	 */
-	static int custom_command(int argc, char *argv[]);
+	int start();
+
+	void stop();
 
 	/**
 	 * @see ModuleBase::print_usage().
@@ -86,21 +86,14 @@ public:
 	 */
 	static int print_usage(const char *reason = nullptr);
 
-	/**
-	 * @see ModuleBase::task_spawn().
-	 * @brief Initializes the class in the same context as the work queue
-	 *        and starts the background listener.
-	 * @param argv Pointer to the input argument array.
-	 * @return Returns 0 iff successful, -1 otherwise.
-	 */
-	static int task_spawn(int argc, char *argv[]);
+	static bool is_running_instance(uint8_t instance);
+	static bool is_running_any();
 
-	/**
-	 * @brief Initiates the heater driver work queue, starts a new background task,
-	 *        and fails if it is already running.
-	 * @return Returns 1 iff start was successful.
-	 */
-	int start();
+	static int start_instance(uint8_t instance);
+	static int stop_all();
+	static int status();
+
+	static Heater *g_heater[HEATER_MAX_INSTANCES];
 
 private:
 
@@ -160,20 +153,40 @@ private:
 
 	float _temperature_last{NAN};
 
-protected:
+	const uint8_t _instance; // 1,2,3
+
+	volatile bool _should_exit{false};
+
+	struct HeaterParamsValue {
+		int32_t imu_id{0};
+		float temp{55.f};
+		float temp_ff{0.05f};
+		float temp_i{0.025f};
+		float temp_p{1.f};
+	};
+
+	class HeaterParamsIface
+	{
+	public:
+		virtual ~HeaterParamsIface() = default;
+		virtual void read(HeaterParamsValue &out) = 0;
+	};
 	struct {
-		param_t sens_imu_temp_ff;
-		param_t sens_imu_temp_i;
-		param_t sens_imu_temp_p;
-		param_t sens_imu_temp;
-		param_t sens_temp_id;
-	} _heater_param_handles;
+		param_t imu_id;
+		param_t temp;
+		param_t temp_p;
+		param_t temp_i;
+		param_t temp_ff;
+	} _param_handles;
 
 	struct {
-		float sens_imu_temp_ff;
-		float sens_imu_temp_i;
-		float sens_imu_temp_p;
-		float sens_imu_temp;
-		int32_t sens_temp_id;
+		int32_t imu_id;   // HEATER<i>_IMU_ID: <0 disable, 0 auto, >0 match device_id
+		float   temp;     // target temperature
+		float   temp_p;
+		float   temp_i;
+		float   temp_ff;
 	} _params;
+
 };
+
+
