@@ -3,7 +3,7 @@ __max_num_config_instances: &max_num_config_instances 3
 module_name: heater
 
 parameters:
-    - group: Heater
+    - group: Sensors
       definitions:
         HEATER${i}_IMU_ID:
             description:

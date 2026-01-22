@@ -91,7 +91,7 @@ public:
 
 	static int start_instance(uint8_t instance);
 	static int stop_all();
-	static int status();
+	static int status(uint8_t instance);
 
 	static Heater *g_heater[HEATER_MAX_INSTANCES];
 
@@ -156,21 +156,6 @@ private:
 	const uint8_t _instance; // 1,2,3
 
 	volatile bool _should_exit{false};
-
-	struct HeaterParamsValue {
-		int32_t imu_id{0};
-		float temp{55.f};
-		float temp_ff{0.05f};
-		float temp_i{0.025f};
-		float temp_p{1.f};
-	};
-
-	class HeaterParamsIface
-	{
-	public:
-		virtual ~HeaterParamsIface() = default;
-		virtual void read(HeaterParamsValue &out) = 0;
-	};
 	struct {
 		param_t imu_id;
 		param_t temp;

@@ -83,15 +83,15 @@
 Heater *Heater::g_heater[HEATER_MAX_INSTANCES] {};
 
 Heater::Heater(uint8_t instance, const px4::wq_config_t &wq) :
-	ScheduledWorkItem(MODULE_NAME, wq)
-	, ModuleParams(nullptr)
-	, _instance(instance) //
+	ScheduledWorkItem(MODULE_NAME, wq),
+	ModuleParams(nullptr),
+	_instance(instance)
 {
-	// ... PX4IO 初始化逻辑 ...
+	initialize_heater_io();
 
 	char name[32];
 
-	// 动态查找当前实例对应的参数句柄
+	// Dynamically locate the parameter handle corresponding to the current instance
 	snprintf(name, sizeof(name), "HEATER%u_IMU_ID", (unsigned)_instance);
 	_param_handles.imu_id = param_find(name); //
 
@@ -107,15 +107,16 @@ Heater::Heater(uint8_t instance, const px4::wq_config_t &wq) :
 	snprintf(name, sizeof(name), "HEATER%u_TEMP_FF", (unsigned)_instance);
 	_param_handles.temp_ff = param_find(name); //
 
-	// 初始化参数数值
-	update_params(true);
-
 	_heater_status_pub.advertise(); //
+
+	// Initialization parameter values
+	update_params(true);
 }
 
 Heater::~Heater()
 {
 	disable_heater();
+	ScheduleClear();
 
 }
 
@@ -294,19 +295,12 @@ bool Heater::initialize_topics()
 
 	const int32_t target = _params.imu_id;
 
-	// <0 Disabled
-	if (target < 0) {
-		PX4_INFO("heater %u disabled (HEATER%u_IMU_ID=%ld)",
-			 (unsigned)_instance, (unsigned)_instance, (long)target);
-		return false;
-	}
-
 	// Scan multiple instances of accel, matching device_id or auto-select
 	int8_t selected_instance = -1;
 	sensor_accel_s accel{};
 
 
-	for (uint8_t i = 0; i < 3; i++) {
+	for (uint8_t i = 0; i < HEATER_MAX_INSTANCES; i++) {
 		uORB::Subscription s{ORB_ID(sensor_accel), i};
 
 		if (!s.advertised()) {
@@ -355,37 +349,6 @@ bool Heater::initialize_topics()
 }
 
 
-void Heater::update_params(bool force)
-{
-	if (force || _parameter_update_sub.updated()) {
-		parameter_update_s u{};
-		_parameter_update_sub.copy(&u); //
-
-		if (_param_handles.imu_id != PARAM_INVALID) {
-			param_get(_param_handles.imu_id, &_params.imu_id);
-		}
-
-		if (_param_handles.temp != PARAM_INVALID) {
-			param_get(_param_handles.temp, &_params.temp);
-		}
-
-		if (_param_handles.temp_p != PARAM_INVALID) {
-			param_get(_param_handles.temp_p, &_params.temp_p);
-		}
-
-		if (_param_handles.temp_i != PARAM_INVALID) {
-			param_get(_param_handles.temp_i, &_params.temp_i);
-		}
-
-		if (_param_handles.temp_ff != PARAM_INVALID) {
-			param_get(_param_handles.temp_ff, &_params.temp_ff);
-		}
-
-		_heater_initialized = true;
-	}
-}
-
-
 
 void Heater::Run()
 {
@@ -403,8 +366,8 @@ void Heater::Run()
 		// Ensure heating is turned off (avoid leaving it in the ON position).
 		heater_off();
 
-		delete Heater::g_heater[_instance];
-		Heater::g_heater[_instance] = nullptr;
+		delete Heater::g_heater[_instance - 1];
+		Heater::g_heater[_instance - 1] = nullptr;
 		return;
 	}
 
@@ -488,29 +451,30 @@ void Heater::publish_status()
 
 int Heater::start()
 {
-	// Exit the driver if the sensor ID does not match the desired sensor.
-	switch (_instance) {
-	case 1:
-		PX4_ERR("Valid HEATER1_IMU_ID required");
-		break;
 
-	case 2:
-		PX4_ERR("Valid HEATER2_IMU_ID required");
-		break;
-
-	case 3:
-		PX4_ERR("Valid HEATER3_IMU_ID required");
-		break;
-
-	default:
-		break;
-	}
-
-	stop();
-	return PX4_ERROR;
 
 	if (_params.imu_id == 0) {
+		// Exit the driver if the sensor ID does not match the desired sensor.
+		switch (_instance) {
+		case 1:
 
+			PX4_ERR("Valid HEATER1_IMU_ID required");
+			break;
+
+		case 2:
+			PX4_ERR("Valid HEATER2_IMU_ID required");
+			break;
+
+		case 3:
+			PX4_ERR("Valid HEATER3_IMU_ID required");
+			break;
+
+		default:
+			break;
+		}
+
+		stop();
+		return PX4_ERROR;
 
 	}
 
@@ -521,19 +485,39 @@ int Heater::start()
 
 void Heater::stop()
 {
-	ScheduleClear();   // Cancel subsequent scheduling to prevent re-execution.
 	_should_exit = true;
 	heater_off();
+	ScheduleNow();
+}
+
+int Heater::status(uint8_t instance ){
+
+	if(instance > 0 && instance < HEATER_MAX_INSTANCES){
+		if (Heater::is_running_instance(instance)) {
+			PX4_INFO("instance %u: running", (unsigned)instance);
+			PX4_INFO("instance %u: IMU ID is %lu",(unsigned)instance , Heater::g_heater[instance - 1]->_params.imu_id);
+		}
+	}
+	else{
+		for (instance = 1; instance <= HEATER_MAX_INSTANCES; instance++) {
+			if (Heater::is_running_instance(instance)) {
+				PX4_INFO("instance %u: running", (unsigned)instance);
+				PX4_INFO("instance %u: IMU ID is %lu",(unsigned)instance , Heater::g_heater[instance - 1]->_params.imu_id);
+			}
+		}
+	}
+	return PX4_OK;
 }
 
 int Heater::stop_all()
 {
 	for (uint8_t i = 0; i < HEATER_MAX_INSTANCES; i++) {
 		if (Heater::g_heater[i]) {
-			Heater::g_heater[i]->_should_exit = true;
 			Heater::g_heater[i]->stop();
 		}
 	}
+
+	PX4_INFO("All heater stoped");
 
 	return PX4_OK;
 }
@@ -550,7 +534,7 @@ bool Heater::is_running_instance(uint8_t instance)
 bool Heater::is_running_any()
 {
 	for (uint8_t i = 0; i < HEATER_MAX_INSTANCES; i++) {
-		if (Heater::g_heater[i]) { return true; }
+		if (Heater::g_heater[i] != nullptr) { return true; }
 	}
 
 	return false;
@@ -589,22 +573,38 @@ int Heater::start_instance(uint8_t instance)
 	return PX4_OK;
 }
 
-
-int Heater::status()
+void Heater::update_params(const bool force)
 {
-	if (!Heater::is_running_any()) {
-		PX4_INFO("not running");
-		return PX4_OK;
-	}
+	if (_parameter_update_sub.updated() || force) {
+		// clear update
+		parameter_update_s param_update;
+		_parameter_update_sub.copy(&param_update);
 
-	for (uint8_t inst1 = 1; inst1 <= HEATER_MAX_INSTANCES; inst1++) {
-		if (Heater::is_running_instance(inst1)) {
-			PX4_INFO("instance %u: running", (unsigned)inst1);
+		// update parameters from storage
+		if (_param_handles.imu_id != PARAM_INVALID) {
+			param_get(_param_handles.imu_id, &_params.imu_id);
 		}
-	}
 
-	return PX4_OK;
+		if (_param_handles.temp != PARAM_INVALID) {
+			param_get(_param_handles.temp, &_params.temp);
+		}
+
+		if (_param_handles.temp_p != PARAM_INVALID) {
+			param_get(_param_handles.temp_p, &_params.temp_p);
+		}
+
+		if (_param_handles.temp_i != PARAM_INVALID) {
+			param_get(_param_handles.temp_i, &_params.temp_i);
+		}
+
+		if (_param_handles.temp_ff != PARAM_INVALID) {
+			param_get(_param_handles.temp_ff, &_params.temp_ff);
+		}
+
+		_heater_initialized = true;
+	}
 }
+
 
 int Heater::print_usage(const char *reason)
 {
@@ -630,64 +630,63 @@ This task can be started at boot from the startup scripts by setting SENS_EN_THE
 
 extern "C" __EXPORT int heater_main(int argc, char *argv[])
 {
-    if (argc < 2) {
-        PX4_INFO("usage: heater {start|stop|status} [-i N]");
-        return PX4_ERROR;
-    }
+    	if (argc < 2) {
+		PX4_INFO("usage: heater {start|stop|status} [-i N]");
+		return PX4_ERROR;
+    	}
 
-    if (!strcmp(argv[1], "start")) {
+    	int ch;
+	int myoptind = 2;
+	const char *myoptarg = nullptr;
+	int instance = -1;
+	while ((ch = px4_getopt(argc, argv, "i:", &myoptind, &myoptarg)) != EOF) {
+	    if (ch == 'i') {
+	        instance = (int)strtol(myoptarg, nullptr, 10);
+	    }
+	}
 
-        int ch;
-        int myoptind = 2;
-        const char *myoptarg = nullptr;
-        int instance = -1;
+	if (!strcmp(argv[1], "start")) {
+		// Compatibility: Without parameters, only the first one is applied by default.
+		if (instance > 0) {
+			return Heater::start_instance((uint8_t)instance);
+		} else {
+			PX4_INFO("Heater numbers start from 1, trying to start all Heaters");
+			for(uint8_t i = 0; i < HEATER_NUM; i++){
+				Heater::start_instance(i + 1);
+			}
 
-        while ((ch = px4_getopt(argc, argv, "i:", &myoptind, &myoptarg)) != EOF) {
-            if (ch == 'i') {
-                instance = (int)strtol(myoptarg, nullptr, 10);
-            }
-        }
+			return PX4_OK;
+		}
+	}
 
-        // Compatibility: Without parameters, only the first one is applied by default.
-        if (instance > 0) {
-            	return Heater::start_instance((uint8_t)instance);
-        } else {
-		PX4_INFO("Heater numbers start from 1, trying to start Heater1");
-            	return Heater::start_instance(1);
-        }
-    }
+	if (!strcmp(argv[1], "stop")) {
 
-    if (!strcmp(argv[1], "stop")) {
-	int ch;
-        int myoptind = 2;
-        const char *myoptarg = nullptr;
-        int instance = -1;
-
-        while ((ch = px4_getopt(argc, argv, "i:", &myoptind, &myoptarg)) != EOF) {
-            if (ch == 'i') {
-                instance = (int)strtol(myoptarg, nullptr, 10);
-            }
-        }
-
-	// Compatibility: Without parameters, only the first one is applied by default.
-        if (instance > 0 && instance <= HEATER_MAX_INSTANCES) {
-            if (Heater::g_heater[instance - 1]) {
-                Heater::g_heater[instance - 1]->stop();
-                return PX4_OK;
-            }
-            return PX4_ERROR;
-        } else {
-            return Heater::stop_all();
-        }
+		// Compatibility: Without parameters, only the first one is applied by default.
+		if (instance > 0 && instance <= HEATER_MAX_INSTANCES) {
+		if (Heater::g_heater[instance - 1]) {
+			Heater::g_heater[instance - 1]->stop();
+			return PX4_OK;
+		}
+		return PX4_ERROR;
+		} else {
+			return Heater::stop_all();
+		}
 
 
-    }
+	}
 
-    if (!strcmp(argv[1], "status")) {
-        return Heater::status();
-    }
+	if (!strcmp(argv[1], "status")) {
 
-    PX4_INFO("unknown command");
-    return PX4_ERROR;
+		if (!Heater::is_running_any()) {
+			PX4_INFO("not running");
+			return PX4_OK;
+		}
+
+		Heater::status(instance);
+		return PX4_OK;
+	}
+
+	PX4_INFO("unknown command");
+	return PX4_ERROR;
 }
 
