@@ -155,11 +155,12 @@
  * Heater
 */
 #define GPIO_HEATER_OUTPUT
-#define HEATER_GPIO
 #define HEATER_NUM 2
 
 #define GPIO_HEATER1_OUTPUT		GPIO_PC0
 #define GPIO_HEATER2_OUTPUT		GPIO_PC1
+#define HEATER1_OUTPUT_EN(on_true)	px4_arch_gpiowrite(GPIO_HEATER1_OUTPUT, (on_true))
+#define HEATER2_OUTPUT_EN(on_true)	px4_arch_gpiowrite(GPIO_HEATER2_OUTPUT, (on_true))
 
 
 /* SD card bringup does not work if performed on the IDLE thread because it
