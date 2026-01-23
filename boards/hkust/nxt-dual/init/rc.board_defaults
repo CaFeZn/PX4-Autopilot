@@ -23,11 +23,11 @@ param set-default CA_AIRFRAME 0
 param set-default CA_ROTOR_COUNT 4
 param set-default CBRK_SUPPLY_CHK 894281
 
-param set-default HEATER1_IMU_ID 6946826 # BMI088
-param set-default HEATER2_IMU_ID 6946850 # BMI088
+# param set-default HEATER1_IMU_ID 6946826 # BMI088
+# param set-default HEATER2_IMU_ID 6946850 # BMI088
 
-param set-default HEATER1_TEMP 48.0
-param set-default HEATER2_TEMP 42.0
+param set-default HEATER1_TEMP 42.0
+param set-default HEATER2_TEMP 48.0
 
 # run two heater instances
 # heater start -i 1
