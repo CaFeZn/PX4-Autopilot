@@ -488,7 +488,7 @@ int Heater::status(uint8_t instance ){
 	if(instance > 0 && instance <= HEATER_MAX_INSTANCES){
 		if (Heater::is_running_instance(instance)) {
 			PX4_INFO("instance %u: running", (unsigned)instance);
-			PX4_INFO("instance %u: IMU ID is %lu",(unsigned)instance , Heater::g_heater[instance - 1]->_params.imu_id);
+			PX4_INFO("instance %u: IMU ID is %lu",(unsigned)instance , Heater::g_heater[instance - 1]->_sensor_device_id);
 			PX4_INFO("instance %u: IMU Temperature is %f",(unsigned)instance , (double)Heater::g_heater[instance - 1]->_temperature_last);
 			PX4_INFO("instance %u: Set Temperature is %f",(unsigned)instance , (double)Heater::g_heater[instance - 1]->_params.temp);
 
@@ -498,7 +498,7 @@ int Heater::status(uint8_t instance ){
 		for (instance = 1; instance <= HEATER_MAX_INSTANCES; instance++) {
 			if (Heater::is_running_instance(instance)) {
 				PX4_INFO("instance %u: running", (unsigned)instance);
-				PX4_INFO("instance %u: IMU ID is %lu",(unsigned)instance , Heater::g_heater[instance - 1]->_params.imu_id);
+				PX4_INFO("instance %u: IMU ID is %lu",(unsigned)instance , Heater::g_heater[instance - 1]->_sensor_device_id);
 				PX4_INFO("instance %u: IMU Temperature is %f",(unsigned)instance , (double)Heater::g_heater[instance - 1]->_temperature_last);
 				PX4_INFO("instance %u: Set Temperature is %f",(unsigned)instance , (double)Heater::g_heater[instance - 1]->_params.temp);
 			}
