@@ -54,6 +54,7 @@
 // Use ioctl calls to IO driver to turn heater on/off
 // TODO: Multi-instance heater for PX4IO to be implemented
 #  define HEATER_PX4IO
+#  define HEATER_NUM 1
 #else
 // Use direct calls to turn GPIO pin on/off
 #  ifndef GPIO_HEATER_OUTPUT
