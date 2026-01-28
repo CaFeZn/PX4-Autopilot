@@ -22,3 +22,7 @@ param set-default MAV_TYPE 2
 param set-default CA_AIRFRAME 0
 param set-default CA_ROTOR_COUNT 4
 param set-default CBRK_SUPPLY_CHK 894281
+
+# BMI088   ID 6946826 ; IO PD14
+
+# ICM42688 ID 3407906 ; IO PD15
