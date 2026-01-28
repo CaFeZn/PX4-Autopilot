@@ -191,6 +191,12 @@
 
 #define GPIO_HEATER_OUTPUT
 
+// BMI088   ID 6946826
+// 	    IO PD14
+
+// ICM45686 ID 3407906
+// 	    IO PD15
+
 
 __BEGIN_DECLS
 
