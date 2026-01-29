@@ -151,6 +151,26 @@
 #define GPIO_SBUS_INV                  (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_2MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTE|GPIO_PIN15)
 #define RC_INVERT_INPUT(_invert_true)  px4_arch_gpiowrite(GPIO_SBUS_INV, _invert_true);
 
+
+/*
+ * Heater
+*/
+#define GPIO_HEATER_OUTPUT
+#define HEATER_NUM 2
+
+#define GPIO_HEATER1_OUTPUT	/* PD14 */ (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_2MHz|GPIO_PORTD|GPIO_PIN14)
+#define GPIO_HEATER2_OUTPUT	/* PD15 */ (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_2MHz|GPIO_PORTD|GPIO_PIN15)
+#define HEATER1_OUTPUT_EN(on_true)	   px4_arch_gpiowrite(GPIO_HEATER1_OUTPUT, (on_true))
+#define HEATER2_OUTPUT_EN(on_true)	   px4_arch_gpiowrite(GPIO_HEATER2_OUTPUT, (on_true))
+
+
+// BMI088   ID 6946826
+// 	    IO PD14
+
+// ICM45686 ID 3407906
+// 	    IO PD15
+
+
 /* SD card bringup does not work if performed on the IDLE thread because it
  * will cause waiting.  Use either:
  *
@@ -184,19 +204,6 @@
 #define BOARD_ENABLE_CONSOLE_BUFFER
 
 #define BOARD_NUM_IO_TIMERS 5
-
-/*
- * Heater
-*/
-#define PX4IO_HEATER_ENABLED
-
-#define GPIO_HEATER_OUTPUT
-
-// BMI088   ID 6946826
-// 	    IO PD14
-
-// ICM45686 ID 3407906
-// 	    IO PD15
 
 
 __BEGIN_DECLS
