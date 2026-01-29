@@ -22,3 +22,9 @@ param set-default MAV_TYPE 2
 param set-default CA_AIRFRAME 0
 param set-default CA_ROTOR_COUNT 4
 param set-default CBRK_SUPPLY_CHK 894281
+
+param set-default HEATER1_IMU_ID 6946826 # BMI088   ; IO PD14
+param set-default HEATER2_IMU_ID 3407906 # ICM42688 ; IO PD15
+
+param set-default HEATER1_TEMP 48.0
+param set-default HEATER2_TEMP 42.0
