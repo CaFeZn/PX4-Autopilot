@@ -54,7 +54,6 @@
 // Use ioctl calls to IO driver to turn heater on/off
 // TODO: Multi-instance heater for PX4IO to be implemented
 #  define HEATER_PX4IO
-#  define HEATER_NUM 1
 #else
 // Use direct calls to turn GPIO pin on/off
 #  ifndef GPIO_HEATER_OUTPUT
@@ -84,9 +83,9 @@
 Heater *Heater::g_heater[HEATER_MAX_INSTANCES] {}; //! 0-based
 
 Heater::Heater(uint8_t instance) :
-    ScheduledWorkItem(heater_instance_name(instance), px4::wq_configurations::lp_default),
-    ModuleParams(nullptr),
-    _instance(instance)
+	ScheduledWorkItem(heater_instance_name(instance), px4::wq_configurations::lp_default),
+	ModuleParams(nullptr),
+	_instance(instance)
 {
 	initialize_heater_io();
 
@@ -469,7 +468,7 @@ int Heater::start()
 	// Auto-select only allowed for legacy single-heater setups
 	if ((target == 0) && (HEATER_NUM > 1)) {
 		PX4_INFO("heater %u disabled (HEATER%u_IMU_ID=0 not allowed when HEATER_NUM>1)",
-			(unsigned)_instance, (unsigned)_instance);
+			 (unsigned)_instance, (unsigned)_instance);
 		return PX4_OK;
 	}
 
@@ -484,38 +483,43 @@ void Heater::stop()
 	ScheduleNow();
 }
 
-int Heater::status(uint8_t instance ){
+int Heater::status(uint8_t instance)
+{
 
-	if(instance > 0 && instance <= HEATER_MAX_INSTANCES){
+	if (instance > 0 && instance <= HEATER_MAX_INSTANCES) {
 		if (Heater::is_running_instance(instance)) {
 			PX4_INFO("instance %u: running", (unsigned)instance);
-			PX4_INFO("instance %u: IMU ID is %lu",(unsigned)instance , Heater::g_heater[instance - 1]->_sensor_device_id);
-			PX4_INFO("instance %u: IMU Temperature is %f",(unsigned)instance , (double)Heater::g_heater[instance - 1]->_temperature_last);
-			PX4_INFO("instance %u: Set Temperature is %f",(unsigned)instance , (double)Heater::g_heater[instance - 1]->_params.temp);
+			PX4_INFO("instance %u: IMU ID is %lu", (unsigned)instance, Heater::g_heater[instance - 1]->_sensor_device_id);
+			PX4_INFO("instance %u: IMU Temperature is %f", (unsigned)instance, (double)Heater::g_heater[instance - 1]->_temperature_last);
+			PX4_INFO("instance %u: Set Temperature is %f", (unsigned)instance, (double)Heater::g_heater[instance - 1]->_params.temp);
 
 		}
-	}
-	else{
+
+	} else {
 		for (instance = 1; instance <= HEATER_MAX_INSTANCES; instance++) {
 			if (Heater::is_running_instance(instance)) {
 				PX4_INFO("instance %u: running", (unsigned)instance);
-				PX4_INFO("instance %u: IMU ID is %lu",(unsigned)instance , Heater::g_heater[instance - 1]->_sensor_device_id);
-				PX4_INFO("instance %u: IMU Temperature is %f",(unsigned)instance , (double)Heater::g_heater[instance - 1]->_temperature_last);
-				PX4_INFO("instance %u: Set Temperature is %f",(unsigned)instance , (double)Heater::g_heater[instance - 1]->_params.temp);
+				PX4_INFO("instance %u: IMU ID is %lu", (unsigned)instance, Heater::g_heater[instance - 1]->_sensor_device_id);
+				PX4_INFO("instance %u: IMU Temperature is %f", (unsigned)instance, (double)Heater::g_heater[instance - 1]->_temperature_last);
+				PX4_INFO("instance %u: Set Temperature is %f", (unsigned)instance, (double)Heater::g_heater[instance - 1]->_params.temp);
 			}
 		}
 	}
+
 	return PX4_OK;
 }
 
 const char *Heater::heater_instance_name(uint8_t inst)
 {
-    switch (inst) {
-    case 1: return "heater_1";
-    case 2: return "heater_2";
-    case 3: return "heater_3";
-    default: return "heater";
-    }
+	switch (inst) {
+	case 1: return "heater_1";
+
+	case 2: return "heater_2";
+
+	case 3: return "heater_3";
+
+	default: return "heater";
+	}
 }
 
 
@@ -638,12 +642,12 @@ This task can be started at boot from the startup scripts by setting SENS_EN_THE
 
 extern "C" __EXPORT int heater_main(int argc, char *argv[])
 {
-    	if (argc < 2) {
+	if (argc < 2) {
 		PX4_INFO("usage: heater {start|stop|status} [-i N]");
 		return PX4_ERROR;
-    	}
+	}
 
-    	int ch;
+	int ch;
 	int myoptind = 2;
 	const char *myoptarg = nullptr;
 	int instance = -1;
@@ -697,4 +701,3 @@ extern "C" __EXPORT int heater_main(int argc, char *argv[])
 	PX4_INFO("unknown command");
 	return PX4_ERROR;
 }
-
