@@ -63,8 +63,9 @@
 #  define GPIO_nLED_BLUE        /* PB15 */  (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_50MHz|GPIO_OUTPUT_SET|GPIO_PORTB|GPIO_PIN15)
 
 #  define BOARD_HAS_CONTROL_STATUS_LEDS      1
-#  define BOARD_OVERLOAD_LED     LED_RED
-#  define BOARD_ARMED_STATE_LED  LED_BLUE
+#define BOARD_OVERLOAD_LED     LED_RED
+#define BOARD_ARMED_LED        LED_BLUE
+#define BOARD_ARMED_STATE_LED  LED_GREEN
 
 /* I2C busses */
 /* Devices on the onboard buses.
@@ -116,7 +117,8 @@
  */
 #define DIRECT_PWM_OUTPUT_CHANNELS   8
 
-#define BOARD_HAS_PWM  DIRECT_PWM_OUTPUT_CHANNELS
+#define BOARD_NUM_IO_TIMERS 3
+
 
 
 /* Spare GPIO */
@@ -125,13 +127,13 @@
 #define GPIO_PC1                       	/* PC1 */  (GPIO_INPUT|GPIO_PULLUP|GPIO_PORTC|GPIO_PIN1)
 /* Tone alarm output */
 
-#define TONE_ALARM_TIMER        4 /* Timer 4 */
-#define TONE_ALARM_CHANNEL      3  /* PD14 GPIO_TIM4_CH3 NC */
+// #define TONE_ALARM_TIMER        4 /* Timer 4 */
+// #define TONE_ALARM_CHANNEL      3  /* PD14 GPIO_TIM4_CH3 NC */
 /*NC can be modified with Spare GPIO then connected with hardware */
-#define GPIO_BUZZER_1           /* PA4 */ (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_2MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTA|GPIO_PIN4)
+// #define GPIO_BUZZER_1           /* PA4 */ (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_2MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTA|GPIO_PIN4)
 
-#define GPIO_TONE_ALARM_IDLE    GPIO_BUZZER_1
-#define GPIO_TONE_ALARM         GPIO_BUZZER_1
+// #define GPIO_TONE_ALARM_IDLE    GPIO_BUZZER_1
+// #define GPIO_TONE_ALARM         GPIO_BUZZER_1
 
 /* USB OTG FS
  *
@@ -141,7 +143,7 @@
 #define BOARD_ADC_USB_CONNECTED (px4_arch_gpioread(GPIO_OTGFS_VBUS))
 
 /* High-resolution timer */
-#define HRT_TIMER               8  /* use timer1 for the HRT */
+#define HRT_TIMER               8  /* use timer8 for the HRT */
 #define HRT_TIMER_CHANNEL       1  /* use capture/compare channel 1 */
 
 /* RC Serial port */
@@ -192,7 +194,6 @@
 
 #define PX4_GPIO_INIT_LIST { \
 		PX4_ADC_GPIO, \
-		GPIO_TONE_ALARM_IDLE, \
 		GPIO_SPL_ADDR_SET, \
 		GPIO_PA4, \
 		GPIO_PC0, \
@@ -203,7 +204,6 @@
 
 #define BOARD_ENABLE_CONSOLE_BUFFER
 
-#define BOARD_NUM_IO_TIMERS 5
 
 
 __BEGIN_DECLS
