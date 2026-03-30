@@ -26,7 +26,15 @@ param set-default CBRK_SUPPLY_CHK 894281
 param set-default HEATER1_IMU_ID 6946826 # BMI088   ; IO PD14
 param set-default HEATER2_IMU_ID 3407906 # ICM42688 ; IO PD15
 
-param set-default HEATER1_TEMP 48.0
+param set-default HEATER1_TEMP 47.0
 param set-default HEATER2_TEMP 48.0
+
+param set-default HEATER1_TEMP_FF 0.22
+param set-default HEATER1_TEMP_I 0.000
+param set-default HEATER1_TEMP_P 0.130
+
+param set-default HEATER2_TEMP_FF 0.42
+param set-default HEATER2_TEMP_I 0.005
+param set-default HEATER2_TEMP_P 0.190
 
 heater start
