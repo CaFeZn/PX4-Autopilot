@@ -1,0 +1,13 @@
+{
+    "board_id": 7140,
+    "magic": "PX4FWv1",
+    "description": "Firmware for the DAMIAO DM-FC01 flight controller",
+    "image": "",
+    "build_time": 0,
+    "summary": "DM-FC01",
+    "version": "1.0.0",
+    "image_size": 0,
+    "image_maxsize": 1835008,
+    "git_identity": "",
+    "board_revision": 1
+}
