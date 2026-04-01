@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2018-19 PX4 Development Team. All rights reserved.
+ *   Copyright (c) 2021 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,67 +31,28 @@
  *
  ****************************************************************************/
 
-/**
- * @file heater_params.c
- * Heater parameters.
- *
- * @author Mark Sauder <mcsauder@gmail.com>
- * @author Alex Klimaj <alexklimaj@gmail.com>
- * @author Jake Dahl <dahl.jakejacob@gmail.com>
- */
+#pragma once
+// #define DMAMAP_SPI1_RX    DMAMAP_DMA12_SPI1RX_0 /* DMA1:37 */
+// #define DMAMAP_SPI1_TX    DMAMAP_DMA12_SPI1TX_0 /* DMA1:38 */
 
-/**
- * Target IMU device ID to regulate temperature.
- *
- * @category system
- * @group Sensors
- */
-PARAM_DEFINE_INT32(SENS_TEMP_ID, 0);
+#define DMAMAP_SPI2_RX    DMAMAP_DMA12_SPI2RX_0 /* DMA1:39 */
+#define DMAMAP_SPI2_TX    DMAMAP_DMA12_SPI2TX_0 /* DMA1:40 */
 
-/**
- * Target IMU temperature.
- *
- * @category system
- * @group Sensors
- * @unit celcius
- * @min 0
- * @max 85.0
- * @decimal 3
- */
-PARAM_DEFINE_FLOAT(SENS_IMU_TEMP, 55.0f);
+// DMAMUX2
+// #define DMAMAP_SPI3_RX    DMAMAP_DMA12_SPI3RX_0 /* DMA1:61 */
+// #define DMAMAP_SPI3_TX    DMAMAP_DMA12_SPI3TX_0 /* DMA1:62 */
 
-/**
- * IMU heater controller feedforward value.
- *
- * @category system
- * @group Sensors
- * @unit %
- * @min 0
- * @max 1.0
- * @decimal 3
- */
-PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_FF, 0.05f);
+// #define DMAMAP_SPI6_RX    DMAMAP_BDMA_SPI6_RX /* BDMA:11 */
+// #define DMAMAP_SPI6_TX    DMAMAP_BDMA_SPI6_TX /* BDMA:12 */
 
-/**
- * IMU heater controller integrator gain value.
- *
- * @category system
- * @group Sensors
- * @unit us/C
- * @min 0
- * @max 1.0
- * @decimal 3
- */
-PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_I, 0.025f);
+// TIM (DSHOT)
+// #define DMAMAP_TIM1_UP DMAMAP_DMA12_TIM1UP_0
+// #define DMAMAP_TIM2_UP DMAMAP_DMA12_TIM2UP_0
+// #define DMAMAP_TIM3_UP DMAMAP_DMA12_TIM3UP_0
 
-/**
- * IMU heater controller proportional gain value.
- *
- * @category system
- * @group Sensors
- * @unit us/C
- * @min 0
- * @max 2.0
- * @decimal 3
- */
-PARAM_DEFINE_FLOAT(SENS_IMU_TEMP_P, 1.0f);
+
+//TODO: UART DMA test
+
+#define DMAMAP_UART4_RX    DMAMAP_DMA12_UART4RX_1 /* DMA1:63 */
+#define DMAMAP_UART4_TX    DMAMAP_DMA12_UART4TX_1 /* DMA1:64 */
+
