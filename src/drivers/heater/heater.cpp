@@ -48,7 +48,6 @@
 #include <drivers/drv_hrt.h>
 #include <drivers/drv_io_heater.h>
 
-
 #if defined(BOARD_USES_PX4IO_VERSION) and defined(PX4IO_HEATER_ENABLED)
 // Heater on some boards is on IO MCU
 // Use ioctl calls to IO driver to turn heater on/off
@@ -117,7 +116,6 @@ Heater::~Heater()
 {
 	disable_heater();
 	ScheduleClear();
-
 }
 
 void Heater::disable_heater()
@@ -419,9 +417,14 @@ void Heater::Run()
 			_temperature_target_met = false;
 		}
 
-		_heater_on = true;
-		heater_on();
-		ScheduleDelayed(_controller_time_on_usec);
+		if (_controller_time_on_usec > 0) {
+			_heater_on = true;
+			heater_on();
+			ScheduleDelayed(_controller_time_on_usec);
+
+		} else {
+			ScheduleDelayed(CONTROLLER_PERIOD_DEFAULT);
+		}
 	}
 
 	publish_status();
@@ -490,10 +493,8 @@ int Heater::status(uint8_t instance)
 		if (Heater::is_running_instance(instance)) {
 			PX4_INFO("instance %u: running", (unsigned)instance);
 			PX4_INFO("instance %u: IMU ID is %lu", (unsigned)instance, Heater::g_heater[instance - 1]->_sensor_device_id);
-			PX4_INFO("instance %u: IMU Temperature is %f", (unsigned)instance,
-				 (double)Heater::g_heater[instance - 1]->_temperature_last);
-			PX4_INFO("instance %u: Set Temperature is %f", (unsigned)instance,
-				 (double)Heater::g_heater[instance - 1]->_params.temp);
+			PX4_INFO("instance %u: IMU Temperature is %f", (unsigned)instance, (double)Heater::g_heater[instance - 1]->_temperature_last);
+			PX4_INFO("instance %u: Set Temperature is %f", (unsigned)instance, (double)Heater::g_heater[instance - 1]->_params.temp);
 
 		}
 
@@ -502,10 +503,8 @@ int Heater::status(uint8_t instance)
 			if (Heater::is_running_instance(instance)) {
 				PX4_INFO("instance %u: running", (unsigned)instance);
 				PX4_INFO("instance %u: IMU ID is %lu", (unsigned)instance, Heater::g_heater[instance - 1]->_sensor_device_id);
-				PX4_INFO("instance %u: IMU Temperature is %f", (unsigned)instance,
-					 (double)Heater::g_heater[instance - 1]->_temperature_last);
-				PX4_INFO("instance %u: Set Temperature is %f", (unsigned)instance,
-					 (double)Heater::g_heater[instance - 1]->_params.temp);
+				PX4_INFO("instance %u: IMU Temperature is %f", (unsigned)instance, (double)Heater::g_heater[instance - 1]->_temperature_last);
+				PX4_INFO("instance %u: Set Temperature is %f", (unsigned)instance, (double)Heater::g_heater[instance - 1]->_params.temp);
 			}
 		}
 	}
