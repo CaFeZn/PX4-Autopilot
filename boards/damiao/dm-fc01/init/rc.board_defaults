@@ -29,12 +29,12 @@ param set-default HEATER2_IMU_ID 3407906 # ICM42688 ; IO PD15
 param set-default HEATER1_TEMP 48.0
 param set-default HEATER2_TEMP 48.0
 
-param set-default HEATER1_TEMP_FF 0.22
+param set-default HEATER1_TEMP_FF 0.04
 param set-default HEATER1_TEMP_I 0.000
-param set-default HEATER1_TEMP_P 0.130
+param set-default HEATER1_TEMP_P 0.200
 
-param set-default HEATER2_TEMP_FF 0.42
-param set-default HEATER2_TEMP_I 0.005
-param set-default HEATER2_TEMP_P 0.190
+param set-default HEATER2_TEMP_FF 0.02
+param set-default HEATER2_TEMP_I 0.001
+param set-default HEATER2_TEMP_P 0.650
 
 heater start
