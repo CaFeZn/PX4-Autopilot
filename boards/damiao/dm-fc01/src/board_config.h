@@ -195,6 +195,7 @@
 #define PX4_GPIO_INIT_LIST { \
 		PX4_ADC_GPIO, \
 		GPIO_SPA_ADDR_SET, \
+		GPIO_SBUS_INV, \
 		GPIO_PA4, \
 		GPIO_PC0, \
 		GPIO_PC1, \
