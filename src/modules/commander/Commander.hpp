@@ -230,7 +230,7 @@ private:
 		_health_and_arming_checks.externalChecks()
 #endif
 	};
-	UserModeIntention	_user_mode_intention {this, _vehicle_status, _health_and_arming_checks, &_mode_management};
+	UserModeIntention _user_mode_intention {_vehicle_status, _health_and_arming_checks, &_mode_management};
 
 	const failsafe_flags_s &_failsafe_flags{_health_and_arming_checks.failsafeFlags()};
 	HomePosition 		_home_position{_failsafe_flags};
@@ -279,6 +279,7 @@ private:
 	bool _arm_tune_played{false};
 	bool _have_taken_off_since_arming{false};
 	bool _status_changed{true};
+	bool _mission_in_progress{false};
 
 	vehicle_land_detected_s	_vehicle_land_detected{};
 

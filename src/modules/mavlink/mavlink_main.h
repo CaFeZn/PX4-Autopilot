@@ -157,14 +157,7 @@ public:
 
 	mavlink_status_t 	*get_status() { return &_mavlink_status; }
 
-	/**
-	 * Set the MAVLink version
-	 *
-	 * Currently supporting v1 and v2
-	 *
-	 * @param version MAVLink version
-	 */
-	void			set_proto_version(unsigned version);
+	void			set_protocol_version(unsigned version);
 
 	static int		destroy_all_instances();
 
@@ -179,6 +172,9 @@ public:
 	bool			check_events() const { return _should_check_events.load(); }
 	void			check_events_enable() { _should_check_events.store(true); }
 	void			check_events_disable() { _should_check_events.store(false); }
+
+	bool			sending_parameters() const { return _sending_parameters.load(); }
+	void			set_sending_parameters(bool sending) { _sending_parameters.store(sending); }
 
 	int			get_uart_fd() const { return _uart_fd; }
 
@@ -213,6 +209,7 @@ public:
 		MAVLINK_MODE_ONBOARD_LOW_BANDWIDTH,
 		MAVLINK_MODE_UAVIONIX,
 		MAVLINK_MODE_LOW_BANDWIDTH,
+		MAVLINK_MODE_DISTANCE_SENSOR,
 		MAVLINK_MODE_COUNT
 	};
 
@@ -272,6 +269,9 @@ public:
 
 		case MAVLINK_MODE_UAVIONIX:
 			return "uAvionix";
+
+		case MAVLINK_MODE_DISTANCE_SENSOR:
+			return "DistanceSensor";
 
 		default:
 			return "Unknown";
@@ -485,6 +485,7 @@ public:
 	/** get the Mavlink shell. Create a new one if there isn't one. It is *always* created via MavlinkReceiver thread.
 	 *  Returns nullptr if shell cannot be created */
 	MavlinkShell		*get_shell();
+	pthread_mutex_t		&get_shell_mutex() { return _mavlink_shell_mutex; }
 	/** close the Mavlink shell if it is open */
 	void			close_shell();
 
@@ -565,12 +566,14 @@ private:
 	bool			_received_messages{false};	/**< Whether we've received valid mavlink messages. */
 
 	px4::atomic_bool	_should_check_events{false};    /**< Events subscription: only one MAVLink instance should check */
+	px4::atomic_bool	_sending_parameters{false};     /**< True if parameters are currently sent out */
 
 	unsigned		_main_loop_delay{1000};	/**< mainloop delay, depends on data rate */
 
 	List<MavlinkStream *>		_streams;
 
 	MavlinkShell		*_mavlink_shell{nullptr};
+	pthread_mutex_t		_mavlink_shell_mutex{};
 	MavlinkULog		*_mavlink_ulog{nullptr};
 	static events::EventBuffer	*_event_buffer;
 	events::SendProtocol		_events{*_event_buffer, *this};
@@ -610,8 +613,7 @@ private:
 	uint64_t		_last_write_success_time{0};
 	uint64_t		_last_write_try_time{0};
 	uint64_t		_mavlink_start_time{0};
-	int32_t			_protocol_version_switch{-1};
-	int32_t			_protocol_version{0};
+	int32_t _protocol_version = 0; ///< after initialization the only values are 1 and 2
 
 	unsigned		_bytes_tx{0};
 	unsigned		_bytes_txerr{0};
@@ -715,6 +717,8 @@ private:
 	void handleAndGetCurrentCommandAck();
 
 	void handleStatus();
+
+	void handleMavlinkShellOutput();
 
 	/**
 	 * Reconfigure a SiK radio if requested by MAV_SIK_RADIO_ID

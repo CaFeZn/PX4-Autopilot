@@ -173,7 +173,6 @@ param set-default COM_RC_IN_MODE 1
 param set-default EKF2_REQ_GPS_H 0.5
 
 param set-default IMU_GYRO_FFT_EN 1
-param set-default MAV_PROTO_VER 2 # Ensures QGC does not drop the first few packets after a SITL restart due to MAVLINK 1 packets
 
 param set-default -s MC_AT_EN 1
 
@@ -298,10 +297,15 @@ then
 	# for multi intances setup, add namespace prefix
 	uxrce_dds_ns="-n px4_$px4_instance"
 fi
-if [ -n "$PX4_UXRCE_DDS_NS" ]
-then
-	# Override namespace if environment variable is defined
-	uxrce_dds_ns="-n $PX4_UXRCE_DDS_NS"
+if [ "${PX4_UXRCE_DDS_NS+x}" ]; then
+	# Override, as variable is set (empty or not)
+	if [ -n "$PX4_UXRCE_DDS_NS" ]; then
+		# Override namespace if environment variable is non-empty
+		uxrce_dds_ns="-n $PX4_UXRCE_DDS_NS"
+	else
+		# Clear namespace if variable is empty
+		uxrce_dds_ns=""
+	fi
 fi
 if [ -n "$ROS_DOMAIN_ID" ]
 then
@@ -318,6 +322,11 @@ then
 fi
 
 uxrce_dds_client start -t udp -p $uxrce_dds_port $uxrce_dds_ns
+
+if param greater -s ZENOH_ENABLE 0
+then
+	zenoh start
+fi
 
 if param greater -s MNT_MODE_IN -1
 then

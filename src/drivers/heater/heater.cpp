@@ -418,11 +418,13 @@ void Heater::Run()
 		}
 
 		if (_controller_time_on_usec > 0) {
+			// Turn the heater on.
 			_heater_on = true;
 			heater_on();
 			ScheduleDelayed(_controller_time_on_usec);
 
 		} else {
+			// Turn the heater off.
 			ScheduleDelayed(CONTROLLER_PERIOD_DEFAULT);
 		}
 	}

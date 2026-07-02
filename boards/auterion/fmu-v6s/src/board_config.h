@@ -145,9 +145,6 @@
 #define HRT_PPM_CHANNEL         /* T8C2 */  2  /* use capture/compare channel 1 */
 #define GPIO_PPM_IN             /* PC7  */ GPIO_TIM8_CH2IN_1
 
-/* RC Serial port (input only) */
-#define RC_SERIAL_PORT          "/dev/ttyS4"
-
 /* This board provides a DMA pool and APIs */
 #define BOARD_DMA_ALLOC_POOL_SIZE 5120
 
@@ -173,6 +170,10 @@
 
 /* Enable the buffer for the dmesg command */
 #define BOARD_ENABLE_CONSOLE_BUFFER
+
+/* No CDCACM driver for this board, so this is manually defined for version.c
+ * so that the px4_board_version reports the correct board id to the companion */
+#define CONFIG_CDCACM_PRODUCTID 60
 
 __BEGIN_DECLS
 

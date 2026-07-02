@@ -41,7 +41,7 @@ uint8 NAVIGATION_STATE_AUTO_LOITER = 4          # Auto loiter mode
 uint8 NAVIGATION_STATE_AUTO_RTL = 5             # Auto return to launch mode
 uint8 NAVIGATION_STATE_POSITION_SLOW = 6
 uint8 NAVIGATION_STATE_FREE5 = 7
-uint8 NAVIGATION_STATE_FREE4 = 8
+uint8 NAVIGATION_STATE_ALTITUDE_CRUISE = 8      # Altitude with Cruise mode
 uint8 NAVIGATION_STATE_FREE3 = 9
 uint8 NAVIGATION_STATE_ACRO = 10                # Acro mode
 uint8 NAVIGATION_STATE_FREE2 = 11
@@ -89,6 +89,7 @@ uint8 HIL_STATE_ON = 1
 
 # Current vehicle locomotion method. A vehicle can have different methods (e.g. VTOL transitions from RW to FW method)
 uint8 vehicle_type
+uint8 VEHICLE_TYPE_UNSPECIFIED = 0
 uint8 VEHICLE_TYPE_ROTARY_WING = 1
 uint8 VEHICLE_TYPE_FIXED_WING = 2
 uint8 VEHICLE_TYPE_ROVER = 3
