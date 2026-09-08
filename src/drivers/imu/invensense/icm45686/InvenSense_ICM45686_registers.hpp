@@ -60,13 +60,16 @@ static constexpr uint8_t DIR_READ = 0x80;
 
 static constexpr uint8_t WHOAMI = 0xE9;
 
-static constexpr float TEMPERATURE_SENSITIVITY = 132.48f; // LSB/C
-static constexpr float TEMPERATURE_OFFSET = 25.f; // C
+static constexpr float TEMPERATURE_SENSITIVITY = 128.f; // 温度灵敏度，单位 LSB/摄氏度
+static constexpr float TEMPERATURE_OFFSET = 25.f; // 温度零点偏移，单位摄氏度
 
 namespace Register
 {
 
 enum class BANK_0 : uint8_t {
+	TEMP_DATA1_UI = 0x0c, /**< UI 温度数据高字节。 */
+	TEMP_DATA0_UI = 0x0d, /**< UI 温度数据低字节。 */
+
 	PWR_MGMT0 = 0x10,
 	FIFO_COUNT_0 = 0x12,
 	FIFO_COUNT_1 = 0x13,
@@ -108,7 +111,16 @@ enum class BANK_0 : uint8_t {
 	INT2_STATUS0 = 0x59,
 
 	WHO_AM_I = 0x72,
+	IREG_ADDR_15_8 = 0x7C, /**< IREG 地址高字节。 */
+	IREG_ADDR_7_0 = 0x7D, /**< IREG 地址低字节。 */
+	IREG_DATA = 0x7E, /**< IREG 数据寄存器。 */
 	REG_MISC2 = 0x7F,
+};
+
+/** @brief 通过 IREG 地址与数据寄存器访问的间接寄存器。 */
+enum class IREG : uint16_t {
+	IPREG_SYS1_REG_166 = 0xA400 | 0xA6, /**< 陀螺仪 GYRO_SRC_CTRL。 */
+	IPREG_SYS2_REG_123 = 0xA500 | 0x7B, /**< 加速度计 ACCEL_SRC_CTRL。 */
 };
 
 };
@@ -130,6 +142,25 @@ enum INT1_STATUS0 : uint8_t {
 	INT1_STATUS_AP_DRDY = Bit2,
 	INT1_STATUS_FIFO_THS = Bit1,
 	INT1_STATUS_FIFO_FULL = Bit0,
+};
+
+/** @brief INT1_CONFIG0 中断源路由位。 */
+enum INT1_CONFIG0_BIT : uint8_t {
+	INT1_STATUS_EN_RESET_DONE = Bit7, /**< 路由复位完成状态。 */
+	INT1_STATUS_EN_AUX1_AGC = Bit6, /**< 路由 AUX1 AGC 状态。 */
+	INT1_STATUS_EN_AP_AGC_RDY = Bit5, /**< 路由 APEX AGC 就绪状态。 */
+	INT1_STATUS_EN_AP_FSYNC = Bit4, /**< 路由 FSYNC 状态。 */
+	INT1_STATUS_EN_AP_AUX1_DRDY = Bit3, /**< 路由 AUX1 DRDY 状态。 */
+	INT1_STATUS_EN_AP_DRDY = Bit2, /**< 路由传感器 DRDY 状态。 */
+	INT1_STATUS_EN_FIFO_THS = Bit1, /**< 路由 FIFO watermark 状态。 */
+	INT1_STATUS_EN_FIFO_FULL = Bit0, /**< 路由 FIFO 满状态。 */
+};
+
+/** @brief INT1_CONFIG2 输出电气与触发模式位。 */
+enum INT1_CONFIG2_BIT : uint8_t {
+	INT1_DRIVE    = Bit2, /**< 0 为推挽，1 为开漏。 */
+	INT1_MODE     = Bit1, /**< 0 为脉冲，1 为锁存。 */
+	INT1_POLARITY = Bit0, /**< 0 为低有效，1 为高有效。 */
 };
 
 enum ACCEL_CONFIG0_BIT : uint8_t {
@@ -181,8 +212,8 @@ enum FIFO_CONFIG0_BIT : uint8_t {
 
 enum FIFO_CONFIG2_BIT : uint8_t {
 	FIFO_FLUSH = Bit7,
-	FIFO_WR_WM_GT_TH_EQUAL = 0,
-	FIFO_WR_WM_GT_TH_GREATER_THAN = Bit3,
+	FIFO_WR_WM_EQ_TH = 0,        // watermark reached only when count == threshold
+	FIFO_WR_WM_EQ_OR_GT_TH = Bit3, // watermark reached when count >= threshold
 };
 
 enum FIFO_CONFIG3_BIT : uint8_t {
@@ -216,6 +247,20 @@ enum REG_MISC2_BIT : uint8_t {
 };
 
 
+//---------------- IREG bits
+
+/** @brief IPREG_SYS1_REG_166 的陀螺仪数据源控制位。 */
+enum IPREG_SYS1_REG_166_BIT : uint8_t {
+	GYRO_SRC_CTRL_INTERP_AAF_SET   = Bit6, /**< 置位后选择 SRC_CTRL=2。 */
+	GYRO_SRC_CTRL_INTERP_AAF_CLEAR = Bit5, /**< 清零后选择 SRC_CTRL=2。 */
+};
+
+/** @brief IPREG_SYS2_REG_123 的加速度计数据源控制位。 */
+enum IPREG_SYS2_REG_123_BIT : uint8_t {
+	ACCEL_SRC_CTRL_INTERP_AAF_SET   = Bit1, /**< 置位后选择 SRC_CTRL=2。 */
+	ACCEL_SRC_CTRL_INTERP_AAF_CLEAR = Bit0, /**< 清零后选择 SRC_CTRL=2。 */
+};
+
 // IPREG_TOP1
 //static constexpr uint8_t BANK_IPREG_TOP1 = 0xA2;
 //static constexpr uint8_t SREG_CTRL = 0x67;
@@ -228,28 +273,26 @@ namespace FIFO
 {
 static constexpr size_t SIZE = 8192;
 
+/** @brief 关闭 FIFO_HIRES_EN 后的 16 字节加速度计与陀螺仪 FIFO 帧。 */
 struct DATA {
-	uint8_t FIFO_Header;
-	uint8_t ACCEL_DATA_XH; // Accel X [19:12]
-	uint8_t ACCEL_DATA_XL; // Accel X [11:4]
-	uint8_t ACCEL_DATA_YH; // Accel Y [19:12]
-	uint8_t ACCEL_DATA_YL; // Accel Y [11:4]
-	uint8_t ACCEL_DATA_ZH; // Accel Z [19:12]
-	uint8_t ACCEL_DATA_ZL; // Accel Z [11:4]
-	uint8_t GYRO_DATA_XH;  // Gyro X [19:12]
-	uint8_t GYRO_DATA_XL;  // Gyro X [11:4]
-	uint8_t GYRO_DATA_YH;  // Gyro Y [19:12]
-	uint8_t GYRO_DATA_YL;  // Gyro Y [11:4]
-	uint8_t GYRO_DATA_ZH;  // Gyro Z [19:12]
-	uint8_t GYRO_DATA_ZL;  // Gyro Z [11:4]
-	uint8_t TEMP_DATA_H;    // Temperature[15:8]
-	uint8_t TEMP_DATA_L;    // Temperature[7:0]
-	uint8_t Timestamp_H;   // Timestamp[15:8]
-	uint8_t Timestamp_L;   // Timestamp[7:0]
-	uint8_t HIGHRES_X_LSB; // Accel X LSB [3:0] Gyro X LSB [3:0]
-	uint8_t HIGHRES_Y_LSB; // Accel Y LSB [3:0] Gyro Y LSB [3:0]
-	uint8_t HIGHRES_Z_LSB; // Accel Z LSB [3:0] Gyro Z LSB [3:0]
+	uint8_t FIFO_Header;   /**< FIFO 帧头。 */
+	uint8_t ACCEL_DATA_XH; /**< 加速度计 X 轴高字节。 */
+	uint8_t ACCEL_DATA_XL; /**< 加速度计 X 轴低字节。 */
+	uint8_t ACCEL_DATA_YH; /**< 加速度计 Y 轴高字节。 */
+	uint8_t ACCEL_DATA_YL; /**< 加速度计 Y 轴低字节。 */
+	uint8_t ACCEL_DATA_ZH; /**< 加速度计 Z 轴高字节。 */
+	uint8_t ACCEL_DATA_ZL; /**< 加速度计 Z 轴低字节。 */
+	uint8_t GYRO_DATA_XH;  /**< 陀螺仪 X 轴高字节。 */
+	uint8_t GYRO_DATA_XL;  /**< 陀螺仪 X 轴低字节。 */
+	uint8_t GYRO_DATA_YH;  /**< 陀螺仪 Y 轴高字节。 */
+	uint8_t GYRO_DATA_YL;  /**< 陀螺仪 Y 轴低字节。 */
+	uint8_t GYRO_DATA_ZH;  /**< 陀螺仪 Z 轴高字节。 */
+	uint8_t GYRO_DATA_ZL;  /**< 陀螺仪 Z 轴低字节。 */
+	uint8_t temperature;   /**< FIFO 8 位温度数据，发布温度改从 UI 寄存器读取。 */
+	uint8_t Timestamp_H;   /**< ODR 时间戳高字节。 */
+	uint8_t Timestamp_L;   /**< ODR 时间戳低字节。 */
 };
+static_assert(sizeof(DATA) == 16, "FIFO packet is 16 bytes without HIRES");
 
 // With FIFO_ACCEL_EN and FIFO_GYRO_EN header should be 8’b_0110_10xx
 enum FIFO_HEADER_BIT : uint8_t {
